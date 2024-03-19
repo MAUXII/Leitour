@@ -1,3 +1,42 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.custom-file-input {
+    color: transparent;
+    
+  }
+  .custom-file-input::-webkit-file-upload-button {
+    visibility: hidden;
+  }
+  .custom-file-input::before {
+    content: '';
+    
+    display: inline-block;
+    
+    
+   
+    outline: none;
+    white-space: nowrap;
+    -webkit-user-select: none;
+    cursor: pointer;
+    
+
+    content: '';
+    display: inline-block;
+    width: 100%; /* Ajuste conforme necessário */
+    height: 100%; /* Ajuste conforme necessário */
+    background-image: url('/icons/post.svg');
+    background-size: contain; /* Ajuste conforme necessário, dependendo do tamanho da imagem */
+    background-repeat: no-repeat;
+    background-position: center center; /* Posiciona a imagem no centro horizontal e vertical */
+  }
+  .custom-file-input:hover::before {
+    border-color: rgba(0, 0, 0, 0);
+  }
+  .custom-file-input:active {
+    outline: 0;
+  }
+  .custom-file-input:active::before {
+    background: -webkit-linear-gradient(top, #e3e3e300, #f9f9f900); 
+  }

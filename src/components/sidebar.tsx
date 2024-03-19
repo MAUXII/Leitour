@@ -36,10 +36,10 @@ import { useState } from "react";
     const { theme, setTheme } = useTheme()
 
     return(
-        <aside className="flex flex-col w-[268px] h-full px-5 py-8 overflow-y-auto bg-white  dark:bg-gray-900 ">
+        <aside className="flex fixed mt-[5.55rem] dark:bg-[#131C29] bg-[#FFFFFF] flex-col w-[268px] h-full px-5 py-[31.5px] overflow-y-auto   ">
     
 
-    <div className="flex flex-col justify-between flex-1 mt-6">
+    <div className="flex flex-col justify-between flex-1 ">
         <nav className="-mx-3 space-y-7 ">
 
         <a className="flex w-full px-3 py-2 rounded-lg ring-2 ring-[#EEEEEE] dark:ring-[#EEEEEE]/5 items-center gap-3" href="#">
@@ -92,7 +92,7 @@ import { useState } from "react";
                     <span className="mx-2 text-sm font-medium">Conhecer</span>
                 </a>
                 <DropdownMenu >
-                <DropdownMenuTrigger className="flex items-center text-2xl px-3 py-4 text-gray-600 transition-colors duration-300 transform rounded-lg dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 dark:hover:text-[#4784ff] hover:text-[#1358E3]" href="#">
+                <DropdownMenuTrigger className="flex items-center text-2xl px-3 py-4 text-gray-600 transition-colors duration-300 transform rounded-lg dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 dark:hover:text-[#4784ff] hover:text-[#1358E3]">
                     <CgMoreO/>
 
                     <span className="mx-2 text-sm font-medium">Mais</span>
