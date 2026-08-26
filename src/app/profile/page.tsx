@@ -1,10 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { BookOpen, BookmarkCheck, Library } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { BookOpen } from "lucide-react";
 import Link from "next/link";
 import { AppShell } from "@/components/app-shell/app-shell";
+import { HubAtmosphere } from "@/components/community-hub/hub-atmosphere";
+import { EditProfileDialog } from "@/components/profile/edit-profile-dialog";
 import { LiquidGlass } from "@/components/ui/glasscn/liquid-glass";
+import { Tooltip } from "@/components/ui/tooltip";
 import { PageLoader } from "@/components/ui/morphing-infinity";
 import { MagneticTabs } from "@/components/ruixen/magnetic-tabs";
 import { useAuth } from "@/hooks/useAuth";
@@ -18,18 +21,11 @@ import { routes } from "@/lib/routes";
 import { coverIndex } from "@/lib/cover-tint";
 import { cn } from "@/lib/utils";
 
-const STATUS_LABEL: Record<ShelfStatus, string> = {
-  quero_ler: "Quero ler",
-  lendo: "Lendo",
-  lido: "Lido",
-  salvo: "Salvo",
-};
-
 function ShelfGrid({ items }: { items: ShelfItem[] }) {
   if (items.length === 0) {
     return (
-      <div className="px-1 py-8 text-center">
-        <p className="text-sm text-white/45">Sua estante está vazia.</p>
+      <div className="py-10 text-center">
+        <p className="text-sm text-white/45">Nada por aqui ainda.</p>
         <Link
           href={routes.books}
           data-snd="select"
@@ -43,45 +39,39 @@ function ShelfGrid({ items }: { items: ShelfItem[] }) {
   }
 
   return (
-    <ul className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5">
+    <ul className="grid grid-cols-3 gap-x-3 gap-y-5 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
       {items.map((item) => {
         const slug = bookSlug({ key: item.bookKey, title: item.title });
         return (
           <li key={item.bookKey}>
-            <Link
-              href={routes.book(slug)}
-              data-snd="select"
-              className="group flex flex-col gap-2"
-            >
-              {item.coverUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={item.coverUrl}
-                  alt=""
-                  className="aspect-[2/3] w-full rounded-[10px] object-cover shadow-[0_12px_28px_-12px_rgba(0,0,0,0.85)] transition group-hover:brightness-110"
-                />
-              ) : (
-                <div
-                  className={cn(
-                    `ff-cover-${coverIndex(item.bookKey)}`,
-                    "flex aspect-[2/3] w-full items-center justify-center rounded-[10px]",
-                  )}
-                >
-                  <BookOpen
-                    className="h-6 w-6 text-white/25"
-                    strokeWidth={1.25}
+            <Tooltip label={item.title}>
+              <Link
+                href={routes.book(slug)}
+                data-snd="select"
+                className="group block"
+              >
+                {item.coverUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={item.coverUrl}
+                    alt={item.title}
+                    className="aspect-[2/3] w-full rounded-[10px] object-cover shadow-[0_14px_32px_-14px_rgba(0,0,0,0.9)] transition duration-300 group-hover:brightness-110 group-hover:scale-[1.02]"
                   />
-                </div>
-              )}
-              <div className="min-w-0">
-                <p className="truncate text-[12px] font-medium text-white/80">
-                  {item.title}
-                </p>
-                <p className="truncate text-[11px] text-white/35">
-                  {STATUS_LABEL[item.status]}
-                </p>
-              </div>
-            </Link>
+                ) : (
+                  <div
+                    className={cn(
+                      `ff-cover-${coverIndex(item.bookKey)}`,
+                      "flex aspect-[2/3] w-full items-center justify-center rounded-[10px]",
+                    )}
+                  >
+                    <BookOpen
+                      className="h-6 w-6 text-white/25"
+                      strokeWidth={1.25}
+                    />
+                  </div>
+                )}
+              </Link>
+            </Tooltip>
           </li>
         );
       })}
@@ -89,9 +79,15 @@ function ShelfGrid({ items }: { items: ShelfItem[] }) {
   );
 }
 
+function filterShelf(items: ShelfItem[], status?: ShelfStatus) {
+  if (!status) return items;
+  return items.filter((i) => i.status === status);
+}
+
 export default function ProfilePage() {
-  const { user, profile, loading, configured } = useAuth();
+  const { user, profile, loading, configured, refreshProfile } = useAuth();
   const [shelf, setShelf] = useState<ShelfItem[]>([]);
+  const [editOpen, setEditOpen] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -102,6 +98,18 @@ export default function ProfilePage() {
       .then(setShelf)
       .catch(() => setShelf([]));
   }, [user]);
+
+  const counts = useMemo(() => {
+    const want = shelf.filter((i) => i.status === "quero_ler").length;
+    const reading = shelf.filter((i) => i.status === "lendo").length;
+    const read = shelf.filter((i) => i.status === "lido").length;
+    return {
+      all: shelf.length,
+      want,
+      reading,
+      read,
+    };
+  }, [shelf]);
 
   if (loading) {
     return <PageLoader />;
@@ -138,84 +146,112 @@ export default function ProfilePage() {
 
   const photo = profile.photoURL || user.photoURL || null;
   const initials = profile.displayName.slice(0, 2).toUpperCase() || "?";
-  const want = shelf.filter((i) => i.status === "quero_ler").length;
-  const reading = shelf.filter((i) => i.status === "lendo").length;
-  const read = shelf.filter((i) => i.status === "lido").length;
+  const bio = profile.bio?.trim();
 
   return (
-    <AppShell>
-      <div className="flex flex-col gap-8">
-        <LiquidGlass className="rounded-2xl">
-          <div className="flex flex-col gap-4 px-5 py-6 sm:flex-row sm:items-center">
+    <>
+      <HubAtmosphere coverUrl={photo} seed={user.uid} />
+      <AppShell className="relative z-[1] bg-transparent">
+        <div className="flex flex-col gap-10">
+          {/* Header clean: foto quadrada grande + identidade */}
+          <header className="flex flex-col gap-6 sm:flex-row sm:items-end sm:gap-8">
             {photo ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={photo}
                 alt=""
-                className="h-16 w-16 shrink-0 rounded-full object-cover bg-white/10"
+                className="h-36 w-36 shrink-0 rounded-[18px] object-cover bg-white/10 shadow-[0_24px_48px_-20px_rgba(0,0,0,0.85)] sm:h-44 sm:w-44 sm:rounded-[20px]"
               />
             ) : (
-              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-white/10 text-lg font-medium text-white">
+              <div className="flex h-36 w-36 shrink-0 items-center justify-center rounded-[18px] bg-white/[0.07] text-3xl font-medium tracking-tight text-white/70 sm:h-44 sm:w-44 sm:rounded-[20px] sm:text-4xl">
                 {initials}
               </div>
             )}
-            <div className="min-w-0 flex-1">
-              <h1 className="text-[28px] font-semibold tracking-tight text-white">
-                {profile.displayName}
-              </h1>
-              <p className="text-sm text-white/45">{profile.handle}</p>
-              <p className="mt-2 max-w-md text-sm text-white/55">
-                {profile.bio || "Sem bio ainda."}
-              </p>
-            </div>
-          </div>
-        </LiquidGlass>
 
-        <div className="grid grid-cols-3 gap-3">
-          {[
-            { label: "Na estante", value: String(shelf.length), icon: Library },
-            { label: "Quero ler", value: String(want + reading), icon: BookOpen },
-            { label: "Lidos", value: String(read), icon: BookmarkCheck },
-          ].map(({ label, value, icon: Icon }) => (
-            <LiquidGlass key={label} className="rounded-2xl">
-              <div className="flex flex-col items-center gap-1 px-3 py-4 text-center">
-                <Icon className="h-4 w-4 text-white/35" strokeWidth={1.5} />
-                <p className="text-lg font-semibold text-white">{value}</p>
-                <p className="text-xs text-white/40">{label}</p>
+            <div className="min-w-0 flex-1 pb-1">
+              <div className="flex flex-wrap items-end justify-between gap-3">
+                <div className="min-w-0">
+                  <h1 className="lt-display text-[2rem] font-medium leading-none tracking-tight text-white sm:text-[2.5rem]">
+                    {profile.displayName || "Leitor"}
+                  </h1>
+                  <p className="mt-2 text-[15px] text-white/40">
+                    {profile.handle}
+                  </p>
+                </div>
+                <LiquidGlass className="shrink-0 !rounded-full">
+                  <button
+                    type="button"
+                    data-snd="select"
+                    onClick={() => setEditOpen(true)}
+                    className="px-4 py-2 text-sm font-medium text-white/85 transition hover:text-white"
+                  >
+                    Editar perfil
+                  </button>
+                </LiquidGlass>
               </div>
-            </LiquidGlass>
-          ))}
-        </div>
+              {bio ? (
+                <p className="mt-4 max-w-md text-[15px] font-light leading-relaxed text-white/60">
+                  {bio}
+                </p>
+              ) : (
+                <p className="mt-4 text-[15px] text-white/30">Sem bio ainda.</p>
+              )}
+            </div>
+          </header>
 
-        <MagneticTabs
-          defaultValue="shelf"
-          items={[
-            {
-              value: "shelf",
-              label: "Estante",
-              content: <ShelfGrid items={shelf} />,
-            },
-            {
-              value: "posts",
-              label: "Publicações",
-              content: (
-                <p className="py-6 text-center text-sm text-white/40">
-                  Publicações no perfil chegam com o feed real.
-                </p>
-              ),
-            },
-            {
-              value: "lists",
-              label: "Listas",
-              content: (
-                <p className="py-6 text-center text-sm text-white/40">
-                  Listas personalizadas — em breve.
-                </p>
-              ),
-            },
-          ]}
-        />
-      </div>
-    </AppShell>
+          <MagneticTabs
+            defaultValue="shelf"
+            size="lg"
+            glass
+            contentBoxed={false}
+            items={[
+              {
+                value: "shelf",
+                label: "Estante",
+                badge: counts.all,
+                content: <ShelfGrid items={shelf} />,
+              },
+              {
+                value: "want",
+                label: "Quero ler",
+                badge: counts.want,
+                content: (
+                  <ShelfGrid items={filterShelf(shelf, "quero_ler")} />
+                ),
+              },
+              {
+                value: "reading",
+                label: "Lendo",
+                badge: counts.reading,
+                content: <ShelfGrid items={filterShelf(shelf, "lendo")} />,
+              },
+              {
+                value: "read",
+                label: "Lidos",
+                badge: counts.read,
+                content: <ShelfGrid items={filterShelf(shelf, "lido")} />,
+              },
+              {
+                value: "posts",
+                label: "Publicações",
+                content: (
+                  <p className="py-8 text-sm text-white/40">
+                    Publicações no perfil — em breve.
+                  </p>
+                ),
+              },
+            ]}
+          />
+        </div>
+      </AppShell>
+
+      <EditProfileDialog
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        user={user}
+        profile={profile}
+        onSaved={refreshProfile}
+      />
+    </>
   );
 }

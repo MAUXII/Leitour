@@ -5,6 +5,7 @@ import {
   completeOnboarding,
   ensureUserProfile,
   needsOnboarding,
+  updateUserProfile,
   type UserProfile,
 } from "@/lib/firebase/users";
 import { routes } from "@/lib/routes";
@@ -63,4 +64,36 @@ export async function finishOnboarding(
 
   await updateAuth({ displayName: trimmed, photoURL });
   return complete(input.user.uid, { displayName: trimmed, photoURL });
+}
+
+type SaveProfileInput = {
+  user: User;
+  displayName: string;
+  bio: string;
+  file?: File | null;
+  existingPhotoURL?: string | null;
+};
+
+/** Edição de perfil: foto opcional + nome + bio. */
+export async function saveProfileEdit(
+  input: SaveProfileInput,
+): Promise<UserProfile> {
+  const trimmed = input.displayName.trim();
+  if (trimmed.length < 2) {
+    throw new Error("Nome curto demais.");
+  }
+
+  let photoURL =
+    input.existingPhotoURL ?? input.user.photoURL ?? null;
+
+  if (input.file) {
+    photoURL = await uploadAvatarToCloudinary(input.file, input.user.uid);
+  }
+
+  await updateAuthProfile({ displayName: trimmed, photoURL });
+  return updateUserProfile(input.user.uid, {
+    displayName: trimmed,
+    bio: input.bio,
+    photoURL,
+  });
 }

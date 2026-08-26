@@ -4,11 +4,16 @@ const ALLOWED = new Set([
   "covers.openlibrary.org",
   "ia600809.us.archive.org",
   "archive.org",
+  "res.cloudinary.com",
 ]);
 
 function isAllowedCover(url: URL) {
   if (ALLOWED.has(url.hostname)) return true;
-  return url.hostname.endsWith(".archive.org");
+  if (url.hostname.endsWith(".archive.org")) return true;
+  // Avatares Google / Cloudinary regionais
+  if (url.hostname.endsWith(".googleusercontent.com")) return true;
+  if (url.hostname.endsWith(".cloudinary.com")) return true;
+  return false;
 }
 
 /** Proxy same-origin pra amostrar tinta no canvas (CORS da OL costuma falhar). */

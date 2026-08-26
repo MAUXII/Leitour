@@ -97,3 +97,37 @@ export async function completeOnboarding(
   if (!next) throw new Error("Perfil não encontrado após onboarding");
   return next;
 }
+
+/** Atualiza nome, bio e foto do leitor. */
+export async function updateUserProfile(
+  uid: string,
+  input: {
+    displayName: string;
+    bio?: string;
+    photoURL?: string | null;
+  },
+): Promise<UserProfile> {
+  const ref = doc(getDb(), "users", uid);
+  const displayName = input.displayName.trim();
+  if (displayName.length < 2) {
+    throw new Error("Nome curto demais.");
+  }
+  const bio = (input.bio ?? "").trim().slice(0, 280);
+  const handle = `@${displayName.toLowerCase().replace(/\s+/g, "").slice(0, 24) || "leitor"}`;
+
+  const payload: Record<string, unknown> = {
+    displayName,
+    handle,
+    bio,
+    updatedAt: serverTimestamp(),
+  };
+  if (input.photoURL !== undefined) {
+    payload.photoURL = input.photoURL;
+  }
+
+  await updateDoc(ref, payload);
+
+  const next = await getUserProfile(uid);
+  if (!next) throw new Error("Perfil não encontrado após salvar");
+  return next;
+}

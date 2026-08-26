@@ -270,7 +270,7 @@ export function PublishDialog({
                     </div>
                   ) : (
                     <>
-                      <label className="flex items-center gap-3 border-b border-white/10 pb-3">
+                      <label className="flex items-center gap-3 pb-3">
                         <Search
                           className="h-5 w-5 shrink-0 text-white/30"
                           strokeWidth={1.5}
@@ -374,7 +374,7 @@ export function PublishDialog({
                     onChange={(e) => setBody(e.target.value)}
                     rows={6}
                     placeholder="O que você achou?"
-                    className="w-full resize-none border-0 border-b border-white/10 bg-transparent pb-3 text-[15px] font-light leading-7 text-white/80 outline-none placeholder:text-white/25 focus:border-white/30"
+                    className="w-full resize-none border-0 bg-transparent pb-3 text-[15px] font-light leading-7 text-white/80 outline-none placeholder:text-white/25"
                   />
                 </label>
 
