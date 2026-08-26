@@ -72,7 +72,6 @@ const TAP_BY_PATH: Record<string, SndName> = {
   [routes.feed]: "tap1",
   [routes.books]: "tap2",
   [routes.discover]: "tap3",
-  [routes.publish]: "tap4",
   [routes.profile]: "tap5",
   [routes.saved]: "tap5",
   [routes.login]: "tap5",

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Check, ChevronDown } from "lucide-react";
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import type { CatalogBook } from "@/lib/catalog";
 import {
@@ -41,6 +42,7 @@ export function BookActions({
   className?: string;
 }) {
   const { user } = useAuth();
+  const pathname = usePathname();
   const [item, setItem] = useState<ShelfItem | null>(null);
   const [busy, setBusy] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
@@ -213,12 +215,15 @@ export function BookActions({
       </button>
 
       <Link
-        href={routes.publishBook({
-          title: book.title,
-          key: book.key,
-          coverUrl: book.coverUrl,
-          authors: book.authors,
-        })}
+        href={routes.publishBook(
+          {
+            title: book.title,
+            key: book.key,
+            coverUrl: book.coverUrl,
+            authors: book.authors,
+          },
+          pathname || "/feed",
+        )}
         data-snd="select"
         className={cn(ghostClass, "text-white/55 hover:text-white")}
       >

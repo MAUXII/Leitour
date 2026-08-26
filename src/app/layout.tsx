@@ -4,6 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider } from "@/components/auth-provider/auth-provider";
 import { OnboardingGate } from "@/components/auth/onboarding-gate";
+import { PublishDialogHost } from "@/components/publish/publish-dialog-host";
 import { SoundProvider } from "@/components/sound-provider/sound-provider";
 import { TopNav } from "@/components/top-nav/top-nav";
 import { APP_NAME, APP_TAGLINE } from "@/lib/brand";
@@ -47,6 +48,7 @@ export default function RootLayout({
               <OnboardingGate>
                 <TopNav />
                 {children}
+                <PublishDialogHost />
               </OnboardingGate>
             </SoundProvider>
           </AuthProvider>

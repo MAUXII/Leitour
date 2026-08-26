@@ -93,8 +93,7 @@ export function TopNav() {
     { href: routes.discover, label: "Descobrir", icon: Compass },
   ] as const;
 
-  const wideNav =
-    pathname === routes.publish || isBookPath(pathname);
+  const wideNav = isBookPath(pathname);
 
   useEffect(() => {
     const update = () => {
