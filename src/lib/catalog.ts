@@ -62,7 +62,7 @@ export function formatSubjectLabel(subject: string): string {
 }
 
 /** Extrai o rótulo de `subject:horror` / `subject:"horror fiction"`. */
-export function parseSubjectNeedle(q: string): string | null {
+function parseSubjectNeedle(q: string): string | null {
   const m = q.trim().match(/^subject:(?:"([^"]+)"|(.+))$/i);
   const value = (m?.[1] ?? m?.[2])?.trim();
   return value || null;
@@ -72,7 +72,7 @@ export function parseSubjectNeedle(q: string): string | null {
  * A OL indexa subject de forma frouxa (ex.: "ships" casa "relationships").
  * Exigimos match de palavra/frase real no array de subjects.
  */
-export function docHasSubject(
+function docHasSubject(
   subjects: string[] | undefined,
   needle: string,
 ): boolean {
@@ -112,7 +112,7 @@ function coverFromDoc(doc: OpenLibraryDoc): string | undefined {
   return undefined;
 }
 
-export function mapOpenLibraryDoc(doc: OpenLibraryDoc): CatalogBook | null {
+function mapOpenLibraryDoc(doc: OpenLibraryDoc): CatalogBook | null {
   if (!doc.title || !doc.key) return null;
   return {
     key: doc.key,

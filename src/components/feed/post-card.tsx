@@ -5,15 +5,14 @@ import { BookOpen, Heart, MessageCircle, MoreHorizontal } from "lucide-react";
 import { useState } from "react";
 import { LiquidGlass } from "@/components/ui/glasscn/liquid-glass";
 import { bookSlug } from "@/lib/book-slug";
-import type { FeedPost } from "@/lib/firebase/posts";
-import { formatPostTime } from "@/lib/firebase/posts";
+import { formatFeedTime, type FeedPost } from "@/lib/feed";
 import { routes } from "@/lib/routes";
 import { playSnd } from "@/lib/snd";
 import { cn } from "@/lib/utils";
 
 export function PostCard({ post }: { post: FeedPost }) {
   const [liked, setLiked] = useState(false);
-  const time = formatPostTime(post.createdAt);
+  const time = formatFeedTime(post.createdAt);
   const initials = post.authorName.slice(0, 2).toUpperCase() || "?";
   const slug =
     post.bookKey && post.bookTitle

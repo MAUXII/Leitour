@@ -2,11 +2,13 @@
 
 import { Suspense, useCallback, useMemo } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { PublishDialog } from "@/components/publish/publish-dialog";
 import {
-  PublishDialog,
+  applyPublishDraft,
+  isPublishOpen,
+  parsePublishDraft,
   type PublishDraft,
-} from "@/components/publish/publish-dialog";
-import { isPublishOpen, PUBLISH_QUERY_KEYS } from "@/lib/routes";
+} from "@/lib/publish-session";
 import { playSnd } from "@/lib/snd";
 
 function PublishDialogHostInner() {
@@ -15,16 +17,8 @@ function PublishDialogHostInner() {
   const searchParams = useSearchParams();
   const open = isPublishOpen(searchParams);
 
-  const draft: PublishDraft = useMemo(
-    () => ({
-      title: searchParams.get("title") ?? "",
-      key: searchParams.get("key"),
-      cover: searchParams.get("cover"),
-      authors: (searchParams.get("authors") ?? "")
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean),
-    }),
+  const draft = useMemo(
+    () => parsePublishDraft(searchParams),
     [searchParams],
   );
 
@@ -45,7 +39,7 @@ function PublishDialogHostInner() {
           params.set("publish", "1");
           playSnd("transitionUp");
         } else {
-          for (const key of PUBLISH_QUERY_KEYS) params.delete(key);
+          applyPublishDraft(params, null);
           playSnd("transitionDown");
         }
       });
@@ -55,17 +49,7 @@ function PublishDialogHostInner() {
 
   const onSelectBook = useCallback(
     (book: PublishDraft) => {
-      replaceParams((params) => {
-        params.set("publish", "1");
-        if (book.title) params.set("title", book.title);
-        else params.delete("title");
-        if (book.key) params.set("key", book.key);
-        else params.delete("key");
-        if (book.cover) params.set("cover", book.cover);
-        else params.delete("cover");
-        if (book.authors.length) params.set("authors", book.authors.join(", "));
-        else params.delete("authors");
-      });
+      replaceParams((params) => applyPublishDraft(params, book));
     },
     [replaceParams],
   );

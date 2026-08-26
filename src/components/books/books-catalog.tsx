@@ -1,69 +1,28 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
 import { BookOpen, Plus, Search } from "lucide-react";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { AppShell } from "@/components/app-shell/app-shell";
 import { AddToShelfButton } from "@/components/books/add-to-shelf-button";
 import { LiquidGlass } from "@/components/ui/glasscn/liquid-glass";
 import { MorphingInfinity } from "@/components/ui/morphing-infinity";
-import {
-  prepareCatalogQuery,
-  type CatalogBook,
-} from "@/lib/catalog";
+import { useCatalogSearch } from "@/hooks/use-catalog-search";
 import { bookSlug } from "@/lib/book-slug";
 import { routes } from "@/lib/routes";
 
 export function BooksCatalog({ initialQuery = "" }: { initialQuery?: string }) {
   const [query, setQuery] = useState(initialQuery);
-  const [books, setBooks] = useState<CatalogBook[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [pending, startTransition] = useTransition();
-  const queryPrep = prepareCatalogQuery(query);
+  const search = useCatalogSearch(query, { immediateQuery: initialQuery });
 
   useEffect(() => {
     setQuery(initialQuery);
   }, [initialQuery]);
 
-  useEffect(() => {
-    if (!queryPrep.ok) {
-      setError(null);
-      setBooks([]);
-      return;
-    }
-
-    const controller = new AbortController();
-    const timer = window.setTimeout(() => {
-      startTransition(async () => {
-        setError(null);
-        try {
-          const res = await fetch(
-            `/api/books/search?q=${encodeURIComponent(query)}`,
-            { signal: controller.signal },
-          );
-          const data = (await res.json()) as {
-            books?: CatalogBook[];
-            error?: string;
-          };
-          if (!res.ok) {
-            setError(data.error ?? "Não foi possível buscar livros.");
-            setBooks([]);
-            return;
-          }
-          setBooks(data.books ?? []);
-        } catch (err) {
-          if ((err as Error).name === "AbortError") return;
-          setError("Falha de rede ao buscar no catálogo.");
-          setBooks([]);
-        }
-      });
-    }, query === initialQuery && initialQuery ? 0 : 400);
-
-    return () => {
-      controller.abort();
-      window.clearTimeout(timer);
-    };
-  }, [query, queryPrep.ok, initialQuery]);
+  const books = search.books;
+  const error = search.error;
+  const pending = search.status === "loading";
+  const queryOk = search.status !== "idle" && search.status !== "short";
 
   return (
     <AppShell>
@@ -104,18 +63,18 @@ export function BooksCatalog({ initialQuery = "" }: { initialQuery?: string }) {
 
         {error && <p className="text-sm text-red-300/90">{error}</p>}
 
-        {queryPrep.ok && pending && books.length === 0 && !error && (
+        {queryOk && pending && books.length === 0 && !error && (
           <div className="flex items-center justify-center gap-3 py-10 text-white/40">
             <MorphingInfinity className="h-7 w-7" />
             <span className="text-sm">Buscando no catálogo…</span>
           </div>
         )}
 
-        {!queryPrep.ok && queryPrep.reason === "short" && (
+        {search.status === "short" && (
           <p className="text-sm text-white/40">Continue digitando.</p>
         )}
 
-        {queryPrep.ok && !pending && !error && books.length === 0 && (
+        {search.status === "ready" && !error && books.length === 0 && (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <div className="mb-6 flex h-28 w-28 items-center justify-center rounded-3xl bg-[var(--lt-surface)]">
               <BookOpen className="h-12 w-12 text-white/25" strokeWidth={1.25} />
@@ -150,18 +109,15 @@ export function BooksCatalog({ initialQuery = "" }: { initialQuery?: string }) {
                       />
                     </div>
                   )}
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold text-white">
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate font-medium text-white">
                       {book.title}
-                    </p>
-                    <p className="truncate text-sm text-white/45">
+                    </span>
+                    <span className="mt-0.5 block truncate text-sm text-white/40">
                       {book.authors.join(", ") || "Autor desconhecido"}
-                    </p>
-                    <p className="mt-1 text-xs text-white/30">
-                      {[book.year, book.isbn].filter(Boolean).join(" · ") ||
-                        "Sem metadados"}
-                    </p>
-                  </div>
+                      {book.year ? ` · ${book.year}` : ""}
+                    </span>
+                  </span>
                 </Link>
                 <AddToShelfButton book={book} />
               </div>

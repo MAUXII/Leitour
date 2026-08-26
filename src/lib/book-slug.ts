@@ -2,7 +2,7 @@
 
 const OL_SUFFIX = /(?:^|-)(ol\d+[wm])$/i;
 
-export function slugifySegment(text: string): string {
+function slugifySegment(text: string): string {
   return text
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
@@ -12,7 +12,7 @@ export function slugifySegment(text: string): string {
     .slice(0, 72);
 }
 
-export function compactOlId(key: string): string | null {
+function compactOlId(key: string): string | null {
   const match = key.match(/OL\d+[WM]/i);
   return match ? match[0].toLowerCase() : null;
 }

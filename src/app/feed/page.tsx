@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import { BookOpen, PenLine } from "lucide-react";
 import { AppShell } from "@/components/app-shell/app-shell";
@@ -9,50 +8,13 @@ import { PostCard } from "@/components/feed/post-card";
 import { LiquidGlass } from "@/components/ui/glasscn/liquid-glass";
 import { MorphingInfinity } from "@/components/ui/morphing-infinity";
 import { useAuth } from "@/hooks/useAuth";
-import { listFeedPosts, type FeedPost } from "@/lib/firebase/posts";
+import { useFeed } from "@/hooks/use-feed";
 import { routes } from "@/lib/routes";
 
 export default function FeedPage() {
   const { user, loading: authLoading, configured } = useAuth();
-  const [posts, setPosts] = useState<FeedPost[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (authLoading) return;
-    if (!configured || !user) {
-      setPosts([]);
-      setLoading(false);
-      return;
-    }
-
-    let cancelled = false;
-    setLoading(true);
-    void listFeedPosts()
-      .then((list) => {
-        if (!cancelled) {
-          setPosts(list);
-          setError(null);
-        }
-      })
-      .catch((err) => {
-        if (!cancelled) {
-          setPosts([]);
-          setError(
-            err instanceof Error
-              ? err.message
-              : "Não foi possível carregar o feed.",
-          );
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [user, authLoading, configured]);
+  const enabled = configured && !!user && !authLoading;
+  const { posts, loading, error } = useFeed(enabled);
 
   return (
     <AppShell>

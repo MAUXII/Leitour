@@ -10,9 +10,7 @@ import {
 import { LiquidGlass } from "@/components/ui/glasscn/liquid-glass";
 import { PageLoader } from "@/components/ui/morphing-infinity";
 import { useAuth } from "@/hooks/useAuth";
-import { uploadAvatarToCloudinary } from "@/lib/avatar-upload";
-import { updateAuthProfile } from "@/lib/firebase/auth";
-import { completeOnboarding } from "@/lib/firebase/users";
+import { finishOnboarding } from "@/lib/account-bootstrap";
 import { routes } from "@/lib/routes";
 import { playSnd } from "@/lib/snd";
 
@@ -76,14 +74,12 @@ export default function OnboardingPage() {
     setBusy(true);
     setError(null);
     try {
-      let photoURL = profile?.photoURL || user.photoURL || null;
-
-      if (opts.withNewPhoto && file) {
-        photoURL = await uploadAvatarToCloudinary(file, user.uid);
-      }
-
-      await updateAuthProfile({ displayName: trimmed, photoURL });
-      await completeOnboarding(user.uid, { displayName: trimmed, photoURL });
+      await finishOnboarding({
+        user,
+        displayName: trimmed,
+        file: opts.withNewPhoto ? file : null,
+        existingPhotoURL: profile?.photoURL || user.photoURL || null,
+      });
       await refreshProfile();
       playSnd("celebration");
       router.replace(routes.feed);

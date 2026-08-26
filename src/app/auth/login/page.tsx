@@ -16,11 +16,8 @@ import {
 import { LiquidGlass } from "@/components/ui/glasscn/liquid-glass";
 import { useAuth } from "@/hooks/useAuth";
 import { APP_TAGLINE } from "@/lib/brand";
+import { afterAuth } from "@/lib/account-bootstrap";
 import { signInWithEmail, signInWithGoogle } from "@/lib/firebase/auth";
-import {
-  ensureUserProfile,
-  needsOnboarding,
-} from "@/lib/firebase/users";
 import { routes } from "@/lib/routes";
 import { playSnd } from "@/lib/snd";
 
@@ -33,11 +30,9 @@ export default function LoginPage() {
   const [busy, setBusy] = useState(false);
 
   async function finishOk(user: User) {
-    const profile = await ensureUserProfile(user);
+    const { nextRoute } = await afterAuth(user);
     playSnd("celebration");
-    router.replace(
-      needsOnboarding(profile) ? routes.onboarding : routes.feed,
-    );
+    router.replace(nextRoute);
     router.refresh();
   }
 

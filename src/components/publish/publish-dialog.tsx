@@ -13,21 +13,19 @@ import {
 } from "@/components/ui/dialog";
 import { LiquidGlass } from "@/components/ui/glasscn/liquid-glass";
 import { useAuth } from "@/hooks/useAuth";
+import { type CatalogBook } from "@/lib/catalog";
+import { publishToFeed } from "@/lib/feed";
 import {
-  prepareCatalogQuery,
-  type CatalogBook,
-} from "@/lib/catalog";
-import { createPost } from "@/lib/firebase/posts";
+  emptyPublishDraft,
+  toCreatePostInput,
+  type PublishDraft,
+} from "@/lib/publish-session";
 import { routes } from "@/lib/routes";
 import { playSnd } from "@/lib/snd";
 import { cn } from "@/lib/utils";
+import { useCatalogSearch } from "@/hooks/use-catalog-search";
 
-export type PublishDraft = {
-  title: string;
-  key: string | null;
-  cover: string | null;
-  authors: string[];
-};
+export type { PublishDraft };
 
 type PublishDialogProps = {
   open: boolean;
@@ -58,19 +56,23 @@ export function PublishDialog({
 
   const [selected, setSelected] = useState<PublishDraft>(draft);
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<CatalogBook[]>([]);
-  const [searching, setSearching] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [body, setBody] = useState("");
   const [rating, setRating] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const search = useCatalogSearch(open ? query : "", {
+    debounceMs: 280,
+    limit: 8,
+  });
+  const results = search.books;
+  const searching = search.status === "loading";
+
   useEffect(() => {
     if (!open) return;
     setSelected(draft);
     setQuery("");
-    setResults([]);
     setMenuOpen(false);
     setBody("");
     setRating(null);
@@ -90,58 +92,22 @@ export function PublishDialog({
 
   useEffect(() => {
     if (!open) return;
-    const prep = prepareCatalogQuery(query);
-    if (!prep.ok) {
-      setResults([]);
-      setSearching(false);
-      return;
+    if (search.status === "ready" && search.books.length > 0) {
+      setMenuOpen(true);
     }
-
-    const controller = new AbortController();
-    const timer = window.setTimeout(() => {
-      setSearching(true);
-      void fetch(`/api/books/search?q=${encodeURIComponent(query)}`, {
-        signal: controller.signal,
-      })
-        .then(async (res) => {
-          const data = (await res.json()) as { books?: CatalogBook[] };
-          if (!res.ok) {
-            setResults([]);
-            return;
-          }
-          setResults((data.books ?? []).slice(0, 8));
-          setMenuOpen(true);
-        })
-        .catch((err) => {
-          if ((err as Error).name === "AbortError") return;
-          setResults([]);
-        })
-        .finally(() => setSearching(false));
-    }, 280);
-
-    return () => {
-      controller.abort();
-      window.clearTimeout(timer);
-    };
-  }, [query, open]);
+  }, [open, search.status, search.books.length]);
 
   function pickBook(book: CatalogBook) {
     const next = draftFromBook(book);
     setSelected(next);
     setQuery("");
-    setResults([]);
     setMenuOpen(false);
     playSnd("select");
     onSelectBook?.(next);
   }
 
   function clearBook() {
-    const empty: PublishDraft = {
-      title: "",
-      key: null,
-      cover: null,
-      authors: [],
-    };
+    const empty = emptyPublishDraft();
     setSelected(empty);
     setQuery("");
     onSelectBook?.(empty);
@@ -169,18 +135,19 @@ export function PublishDialog({
     setError(null);
     playSnd("select");
     try {
-      await createPost({
-        authorUid: user.uid,
-        authorName: profile.displayName || "Leitor",
-        authorHandle: profile.handle || "@leitor",
-        authorPhotoURL: profile.photoURL || user.photoURL || null,
-        bookKey: selected.key,
-        bookTitle: selected.title,
-        bookCoverUrl: selected.cover,
-        bookAuthors: selected.authors,
-        body,
-        rating,
-      });
+      await publishToFeed(
+        toCreatePostInput(
+          selected,
+          {
+            uid: user.uid,
+            displayName: profile.displayName || "Leitor",
+            handle: profile.handle || "@leitor",
+            photoURL: profile.photoURL || user.photoURL || null,
+          },
+          body,
+          rating,
+        ),
+      );
       playSnd("celebration");
       onOpenChange(false);
       if (pathname !== "/feed" && !pathname?.startsWith("/feed")) {

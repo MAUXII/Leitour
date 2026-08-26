@@ -98,19 +98,3 @@ export async function listFeedPosts(max = 30): Promise<FeedPost[]> {
   });
 }
 
-export function formatPostTime(createdAt?: Timestamp): string {
-  if (!createdAt?.toDate) return "";
-  const date = createdAt.toDate();
-  const diffMs = Date.now() - date.getTime();
-  const mins = Math.floor(diffMs / 60_000);
-  if (mins < 1) return "agora";
-  if (mins < 60) return `${mins}min`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h`;
-  const days = Math.floor(hours / 24);
-  if (days < 7) return `${days}d`;
-  return date.toLocaleDateString("pt-BR", {
-    day: "2-digit",
-    month: "short",
-  });
-}
