@@ -20,7 +20,13 @@ npm run dev
 
 Copie `.env.example` → `.env.local` e preencha as chaves.
 
-Depois: `/auth/signup` → `/books` → `/book/…` → `/profile`.
+Publique as rules do Firestore (uma vez):
+
+```powershell
+.\scripts\publish-firestore-rules.ps1
+```
+
+Depois: `/auth/signup` → `/books` → `/book/…` → review → `/feed` → `/profile`.
 
 ## UI
 
