@@ -1,42 +1,43 @@
 "use client";
 
-import { ImagePlus } from "lucide-react";
+import Link from "next/link";
+import { BookOpen } from "lucide-react";
 import { LiquidGlass } from "@/components/ui/glasscn/liquid-glass";
+import { useAuth } from "@/hooks/useAuth";
+import { routes } from "@/lib/routes";
 
+/** CTA do feed — ainda não posta no banco (Sprint 2). */
 export function CreatePost() {
+  const { user, profile } = useAuth();
+  const photo = profile?.photoURL || user?.photoURL || null;
+  const initials = (profile?.displayName || "?").slice(0, 2).toUpperCase();
+
   return (
     <LiquidGlass className="w-full rounded-2xl">
-      <div className="flex flex-col gap-3 px-4 py-4">
-        <p className="text-xs text-white/40">Poste algo</p>
-        <div className="flex items-center gap-3">
-          <div
-            className="h-9 w-9 shrink-0 rounded-full bg-cover bg-center bg-white/10"
-            style={{
-              backgroundImage:
-                "url('https://img.freepik.com/free-psd/3d-illustration-human-avatar-profile_23-2150671159.jpg?w=826')",
-            }}
+      <Link
+        href={routes.publish}
+        data-snd="select"
+        className="flex items-center gap-3 px-4 py-4 transition hover:bg-white/[0.03]"
+      >
+        {photo ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={photo}
+            alt=""
+            className="h-9 w-9 shrink-0 rounded-full object-cover bg-white/10"
           />
-          <input
-            placeholder="O que vem na sua mente?"
-            className="h-10 w-full bg-transparent text-sm text-white outline-none placeholder:text-white/30"
-          />
-          <button
-            type="button"
-            data-snd="select"
-            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white/45 transition hover:bg-white/5 hover:text-white"
-            aria-label="Anexar imagem"
-          >
-            <ImagePlus className="h-4 w-4" strokeWidth={1.5} />
-          </button>
-          <button
-            type="submit"
-            data-snd="button"
-            className="shrink-0 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/15"
-          >
-            Postar
-          </button>
-        </div>
-      </div>
+        ) : (
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10 text-[11px] font-medium text-white/70">
+            {user ? initials : <BookOpen className="h-4 w-4 text-white/35" strokeWidth={1.5} />}
+          </div>
+        )}
+        <span className="flex-1 text-sm text-white/35">
+          {user ? "Escrever uma publicação…" : "Entre para publicar…"}
+        </span>
+        <span className="shrink-0 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-medium text-white">
+          Publicar
+        </span>
+      </Link>
     </LiquidGlass>
   );
 }

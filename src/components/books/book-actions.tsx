@@ -213,7 +213,12 @@ export function BookActions({
       </button>
 
       <Link
-        href={routes.publishBook(book.title)}
+        href={routes.publishBook({
+          title: book.title,
+          key: book.key,
+          coverUrl: book.coverUrl,
+          authors: book.authors,
+        })}
         data-snd="select"
         className={cn(ghostClass, "text-white/55 hover:text-white")}
       >

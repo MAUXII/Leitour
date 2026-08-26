@@ -3,6 +3,7 @@ import { DM_Sans, Fraunces } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider } from "@/components/auth-provider/auth-provider";
+import { OnboardingGate } from "@/components/auth/onboarding-gate";
 import { SoundProvider } from "@/components/sound-provider/sound-provider";
 import { TopNav } from "@/components/top-nav/top-nav";
 import { APP_NAME, APP_TAGLINE } from "@/lib/brand";
@@ -43,8 +44,10 @@ export default function RootLayout({
         >
           <AuthProvider>
             <SoundProvider>
-              <TopNav />
-              {children}
+              <OnboardingGate>
+                <TopNav />
+                {children}
+              </OnboardingGate>
             </SoundProvider>
           </AuthProvider>
         </ThemeProvider>

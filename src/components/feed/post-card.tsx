@@ -1,46 +1,49 @@
 "use client";
 
+import Link from "next/link";
+import { BookOpen, Heart, MessageCircle, MoreHorizontal } from "lucide-react";
 import { useState } from "react";
-import {
-  Heart,
-  MessageCircle,
-  MoreHorizontal,
-  Repeat2,
-  Share,
-} from "lucide-react";
 import { LiquidGlass } from "@/components/ui/glasscn/liquid-glass";
+import { bookSlug } from "@/lib/book-slug";
+import type { FeedPost } from "@/lib/firebase/posts";
+import { formatPostTime } from "@/lib/firebase/posts";
+import { routes } from "@/lib/routes";
 import { playSnd } from "@/lib/snd";
+import { cn } from "@/lib/utils";
 
-type PostCardProps = {
-  author?: string;
-  handle?: string;
-  time?: string;
-  body?: string;
-  avatarUrl?: string;
-};
-
-export function PostCard({
-  author = "Lucas Rabaquim",
-  handle = "@rabaquim",
-  time = "agora",
-  body = "Lorem ipsum dolor sit amet consectetur. Vestibulum nisl risus risus amet sed blandit. Enim consequat tortor mollis enim amet non elit duis.",
-  avatarUrl = "https://img.freepik.com/free-psd/3d-render-avatar-character_23-2150611731.jpg?w=826",
-}: PostCardProps) {
+export function PostCard({ post }: { post: FeedPost }) {
   const [liked, setLiked] = useState(false);
+  const time = formatPostTime(post.createdAt);
+  const initials = post.authorName.slice(0, 2).toUpperCase() || "?";
+  const slug =
+    post.bookKey && post.bookTitle
+      ? bookSlug({ key: post.bookKey, title: post.bookTitle })
+      : null;
 
   return (
     <LiquidGlass className="w-full rounded-2xl">
       <article className="flex gap-3 px-4 py-5">
-        <div
-          className="h-10 w-10 shrink-0 rounded-full bg-cover bg-center bg-white/10"
-          style={{ backgroundImage: `url('${avatarUrl}')` }}
-        />
+        {post.authorPhotoURL ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={post.authorPhotoURL}
+            alt=""
+            className="h-10 w-10 shrink-0 rounded-full object-cover bg-white/10"
+          />
+        ) : (
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-medium text-white/70">
+            {initials}
+          </div>
+        )}
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-2">
             <div className="flex flex-wrap items-center gap-2">
-              <p className="text-sm font-semibold text-white">{author}</p>
+              <p className="text-sm font-semibold text-white">
+                {post.authorName}
+              </p>
               <p className="text-sm text-white/40">
-                {handle} · {time}
+                {post.authorHandle}
+                {time ? ` · ${time}` : ""}
               </p>
             </div>
             <button
@@ -52,7 +55,58 @@ export function PostCard({
               <MoreHorizontal className="h-4 w-4" strokeWidth={1.5} />
             </button>
           </div>
-          <p className="mt-2 text-sm leading-relaxed text-white/70">{body}</p>
+
+          {(post.bookTitle || post.rating) && (
+            <div className="mt-3 flex items-center gap-3">
+              {post.bookCoverUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={post.bookCoverUrl}
+                  alt=""
+                  className="h-14 w-9 shrink-0 rounded-md object-cover bg-white/10"
+                />
+              ) : (
+                <div className="flex h-14 w-9 shrink-0 items-center justify-center rounded-md bg-white/10">
+                  <BookOpen
+                    className="h-4 w-4 text-white/30"
+                    strokeWidth={1.5}
+                  />
+                </div>
+              )}
+              <div className="min-w-0">
+                {slug ? (
+                  <Link
+                    href={routes.book(slug)}
+                    data-snd="select"
+                    className="truncate text-sm font-medium text-white/85 transition hover:text-white"
+                  >
+                    {post.bookTitle}
+                  </Link>
+                ) : (
+                  <p className="truncate text-sm font-medium text-white/85">
+                    {post.bookTitle}
+                  </p>
+                )}
+                {post.bookAuthors.length > 0 ? (
+                  <p className="truncate text-xs text-white/35">
+                    {post.bookAuthors.join(", ")}
+                  </p>
+                ) : null}
+                {post.rating != null ? (
+                  <p className="mt-0.5 text-xs tracking-[0.12em] text-white/50">
+                    {"★".repeat(post.rating)}
+                    <span className="text-white/20">
+                      {"★".repeat(5 - post.rating)}
+                    </span>
+                  </p>
+                ) : null}
+              </div>
+            </div>
+          )}
+
+          <p className="mt-3 text-sm leading-relaxed text-white/70 whitespace-pre-wrap">
+            {post.body}
+          </p>
           <div className="mt-4 flex items-center gap-5 text-white/40">
             <button
               type="button"
@@ -64,15 +118,9 @@ export function PostCard({
             </button>
             <button
               type="button"
-              data-snd="swipe"
-              className="transition hover:text-white"
-              aria-label="Repostar"
-            >
-              <Repeat2 className="h-4 w-4" strokeWidth={1.5} />
-            </button>
-            <button
-              type="button"
-              className={liked ? "text-white" : "transition hover:text-white"}
+              className={cn(
+                liked ? "text-white" : "transition hover:text-white",
+              )}
               aria-label="Curtir"
               aria-pressed={liked}
               onClick={() => {
@@ -87,14 +135,6 @@ export function PostCard({
                 strokeWidth={1.5}
                 fill={liked ? "currentColor" : "none"}
               />
-            </button>
-            <button
-              type="button"
-              data-snd="tap4"
-              className="transition hover:text-white"
-              aria-label="Compartilhar"
-            >
-              <Share className="h-4 w-4" strokeWidth={1.5} />
             </button>
           </div>
         </div>

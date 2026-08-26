@@ -13,5 +13,18 @@ service cloud.firestore {
           && request.auth.uid == userId;
       }
     }
+
+    match /posts/{postId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null
+        && request.resource.data.authorUid == request.auth.uid
+        && request.resource.data.body is string
+        && request.resource.data.body.size() > 0
+        && request.resource.data.body.size() <= 4000
+        && request.resource.data.bookTitle is string
+        && request.resource.data.bookTitle.size() > 0;
+      allow update, delete: if request.auth != null
+        && resource.data.authorUid == request.auth.uid;
+    }
   }
 }

@@ -1,80 +1,140 @@
 "use client";
 
-import { Search } from "lucide-react";
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { BookOpen, PenLine } from "lucide-react";
 import { AppShell } from "@/components/app-shell/app-shell";
 import { CreatePost } from "@/components/feed/create-post";
 import { PostCard } from "@/components/feed/post-card";
 import { LiquidGlass } from "@/components/ui/glasscn/liquid-glass";
-import { MagneticTabs } from "@/components/ruixen/magnetic-tabs";
-
-const MOCK_POSTS = [
-  {
-    author: "Lucas Rabaquim",
-    handle: "@rabaquim",
-    time: "agora",
-    body: "Terminei 1984 hoje. A vigilância constante ainda assusta — e parece menos ficção a cada ano.",
-  },
-  {
-    author: "Ana Costa",
-    handle: "@anac",
-    time: "2h",
-    body: "Estante do mês: três romances e um ensaio. Alguém tem indicação de não-ficção leve?",
-  },
-  {
-    author: "Pedro M.",
-    handle: "@pedrom",
-    time: "5h",
-    body: "Citação do dia: “Um leitor vive mil vidas antes de morrer.” — George R.R. Martin",
-  },
-  {
-    author: "Marina",
-    handle: "@marina.l",
-    time: "ontem",
-    body: "Comecei O Alienista. Machado em dose curta — perfeito pro metrô.",
-  },
-];
+import { MorphingInfinity } from "@/components/ui/morphing-infinity";
+import { useAuth } from "@/hooks/useAuth";
+import { listFeedPosts, type FeedPost } from "@/lib/firebase/posts";
+import { routes } from "@/lib/routes";
 
 export default function FeedPage() {
+  const { user, loading: authLoading, configured } = useAuth();
+  const [posts, setPosts] = useState<FeedPost[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (authLoading) return;
+    if (!configured || !user) {
+      setPosts([]);
+      setLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setLoading(true);
+    void listFeedPosts()
+      .then((list) => {
+        if (!cancelled) {
+          setPosts(list);
+          setError(null);
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setPosts([]);
+          setError(
+            err instanceof Error
+              ? err.message
+              : "Não foi possível carregar o feed.",
+          );
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [user, authLoading, configured]);
+
   return (
     <AppShell>
       <div className="flex flex-col gap-8">
-        <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
           <h1 className="text-[28px] font-semibold tracking-tight text-white">
             Feed
           </h1>
+          <p className="mt-1 text-sm text-white/40">
+            Reviews e notas dos leitores.
+          </p>
         </div>
-
-        <LiquidGlass className="w-full rounded-2xl">
-          <label className="flex h-12 w-full items-center gap-3 px-4">
-            <Search
-              className="h-4 w-4 shrink-0 text-white/35"
-              strokeWidth={1.75}
-            />
-            <input
-              type="search"
-              placeholder="Buscar no feed"
-              className="h-full w-full bg-transparent text-sm text-white outline-none placeholder:text-white/30"
-            />
-          </label>
-        </LiquidGlass>
-
-        <MagneticTabs
-          defaultValue="all"
-          items={[
-            { value: "all", label: "Tudo" },
-            { value: "reviews", label: "Reviews" },
-            { value: "quotes", label: "Citações" },
-            { value: "following", label: "Seguindo" },
-          ]}
-        />
 
         <CreatePost />
 
-        <div className="flex flex-col gap-3">
-          {MOCK_POSTS.map((post) => (
-            <PostCard key={post.handle + post.time} {...post} />
-          ))}
-        </div>
+        {error ? <p className="text-sm text-red-300/90">{error}</p> : null}
+
+        {!configured ? (
+          <p className="text-sm text-amber-200/90">
+            Configure o Firebase para ver o feed.
+          </p>
+        ) : !user && !authLoading ? (
+          <LiquidGlass className="w-full rounded-2xl">
+            <div className="flex flex-col items-center px-6 py-14 text-center">
+              <h2 className="text-lg font-semibold text-white">
+                Entre para ver o feed
+              </h2>
+              <p className="mt-2 max-w-sm text-sm text-white/40">
+                As publicações ficam na conta Firebase.
+              </p>
+              <Link
+                href={routes.login}
+                data-snd="select"
+                className="mt-6 inline-flex rounded-[12px] bg-white px-4 py-2.5 text-sm font-medium text-black transition hover:bg-white/92"
+              >
+                Entrar
+              </Link>
+            </div>
+          </LiquidGlass>
+        ) : loading || authLoading ? (
+          <div className="flex items-center justify-center gap-3 py-14 text-white/40">
+            <MorphingInfinity className="h-7 w-7" />
+            <span className="text-sm">Carregando…</span>
+          </div>
+        ) : posts.length === 0 ? (
+          <LiquidGlass className="w-full rounded-2xl">
+            <div className="flex flex-col items-center px-6 py-16 text-center">
+              <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-white/[0.06]">
+                <PenLine className="h-6 w-6 text-white/35" strokeWidth={1.5} />
+              </div>
+              <h2 className="text-lg font-semibold text-white">
+                Nenhuma publicação ainda
+              </h2>
+              <p className="mt-2 max-w-sm text-sm text-white/40">
+                Seja o primeiro a escrever uma review.
+              </p>
+              <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+                <Link
+                  href={routes.books}
+                  data-snd="select"
+                  className="inline-flex items-center gap-2 rounded-[12px] border border-white/12 bg-white/[0.04] px-4 py-2.5 text-sm font-medium text-white/80 transition hover:bg-white/[0.08] hover:text-white"
+                >
+                  <BookOpen className="h-4 w-4" strokeWidth={1.5} />
+                  Ver livros
+                </Link>
+                <Link
+                  href={routes.publish}
+                  data-snd="select"
+                  className="inline-flex items-center gap-2 rounded-[12px] bg-white px-4 py-2.5 text-sm font-medium text-black transition hover:bg-white/92"
+                >
+                  Escrever review
+                </Link>
+              </div>
+            </div>
+          </LiquidGlass>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {posts.map((post) => (
+              <PostCard key={post.id} post={post} />
+            ))}
+          </div>
+        )}
       </div>
     </AppShell>
   );

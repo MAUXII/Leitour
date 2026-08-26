@@ -8,8 +8,19 @@ export const routes = {
   profile: "/profile",
   saved: "/saved",
   publish: "/publish",
-  publishBook: (title: string) =>
-    `/publish?title=${encodeURIComponent(title)}`,
+  publishBook: (input: {
+    title: string;
+    key?: string;
+    coverUrl?: string;
+    authors?: string[];
+  }) => {
+    const params = new URLSearchParams();
+    params.set("title", input.title);
+    if (input.key) params.set("key", input.key);
+    if (input.coverUrl) params.set("cover", input.coverUrl);
+    if (input.authors?.length) params.set("authors", input.authors.join(", "));
+    return `/publish?${params.toString()}`;
+  },
   login: "/auth/login",
   signup: "/auth/signup",
   onboarding: "/auth/onboarding",
