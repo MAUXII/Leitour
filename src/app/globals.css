@@ -2,41 +2,212 @@
 @tailwind components;
 @tailwind utilities;
 
-.custom-file-input {
-    color: transparent;
-    
-  }
-  .custom-file-input::-webkit-file-upload-button {
-    visibility: hidden;
-  }
-  .custom-file-input::before {
-    content: '';
-    
-    display: inline-block;
-    
-    
-   
-    outline: none;
-    white-space: nowrap;
-    -webkit-user-select: none;
-    cursor: pointer;
-    
+@property --lt-nav-w {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 820px;
+}
 
-    content: '';
-    display: inline-block;
-    width: 100%; /* Ajuste conforme necessário */
-    height: 100%; /* Ajuste conforme necessário */
-    background-image: url('/icons/post.svg');
-    background-size: contain; /* Ajuste conforme necessário, dependendo do tamanho da imagem */
-    background-repeat: no-repeat;
-    background-position: center center; /* Posiciona a imagem no centro horizontal e vertical */
+@property --lt-scroll-thumb {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: rgba(255, 255, 255, 0.2);
+}
+
+:root {
+  --lt-bg: #151618;
+  --lt-surface: #1e1e20;
+  --lt-surface-hover: #262628;
+  --lt-ink: #ffffff;
+  --lt-muted: #888888;
+  --lt-line: rgba(255, 255, 255, 0.08);
+  --lt-radius: 12px;
+  --lt-max-width: 820px;
+  --lt-max-width-wide: 960px;
+  --lt-nav-w: 820px;
+  --lt-nav-pad-x: 16px;
+  --lt-content-pad-x: 16px;
+  --lt-scroll-thumb: rgba(255, 255, 255, 0.2);
+  --lt-scroll-thumb-hover: rgba(255, 255, 255, 0.34);
+  --ff-bg: var(--lt-bg);
+  --ff-scroll-thumb: var(--lt-scroll-thumb);
+  --ff-scroll-thumb-hover: var(--lt-scroll-thumb-hover);
+}
+
+html {
+  overflow-y: auto;
+  scrollbar-width: none;
+  background-color: var(--lt-bg);
+  transition:
+    --lt-nav-w 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+    --lt-scroll-thumb 0.6s ease;
+}
+
+body {
+  scrollbar-width: none;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+*:not(html):not(body) {
+  scrollbar-width: thin;
+  scrollbar-color: var(--lt-scroll-thumb) transparent;
+}
+
+*:not(html):not(body)::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+  background: transparent;
+}
+
+*:not(html):not(body)::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*:not(html):not(body)::-webkit-scrollbar-thumb {
+  background-color: var(--lt-scroll-thumb);
+  border-radius: 99px;
+}
+
+*:not(html):not(body)::-webkit-scrollbar-thumb:hover {
+  background-color: var(--lt-scroll-thumb-hover);
+}
+
+*:not(html):not(body)::-webkit-scrollbar-button {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+.lt-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+  height: 52px;
+  padding: 0 var(--lt-nav-pad-x);
+  box-sizing: border-box;
+}
+
+.lt-center-and-right {
+  --side-width: max(0px, calc((100vw - var(--lt-nav-w)) / 2));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-width: 0;
+  width: calc(var(--lt-nav-w) + var(--side-width) - var(--lt-nav-pad-x));
+  max-width: calc(100% - 0.5rem);
+}
+
+.lt-nav-links {
+  display: none;
+  align-items: center;
+  gap: 1.25rem;
+  padding-left: var(--lt-content-pad-x);
+}
+
+@media (min-width: 768px) {
+  .lt-nav-links {
+    display: flex;
   }
-  .custom-file-input:hover::before {
-    border-color: rgba(0, 0, 0, 0);
+}
+
+.lt-nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.5);
+  transition: color 0.15s ease;
+}
+
+.lt-nav-link:hover {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.lt-nav-link[data-active="true"] {
+  color: #fff;
+}
+
+.lt-shell {
+  width: 100%;
+  max-width: var(--lt-max-width);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: var(--lt-content-pad-x);
+  padding-right: var(--lt-content-pad-x);
+  box-sizing: border-box;
+}
+
+.lt-shell-wide {
+  max-width: var(--lt-max-width-wide);
+  padding-left: var(--lt-nav-pad-x);
+  padding-right: var(--lt-nav-pad-x);
+}
+
+@media (min-width: 992px) {
+  .lt-shell-wide {
+    padding-left: 0;
+    padding-right: 0;
   }
-  .custom-file-input:active {
-    outline: 0;
+}
+
+.lt-display {
+  font-family: var(--font-lt-display), Georgia, serif;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+}
+
+.lt-glass {
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 1rem;
+  box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.55);
+}
+
+@keyframes liquid-drift {
+  0% {
+    background-position: 0% 0%, 100% 100%, 0% 0%;
   }
-  .custom-file-input:active::before {
-    background: -webkit-linear-gradient(top, #e3e3e300, #f9f9f900); 
+  50% {
+    background-position: 30% 20%, 70% 80%, 0% 0%;
   }
+  100% {
+    background-position: 0% 0%, 100% 100%, 0% 0%;
+  }
+}
+
+.lt-cover-0,
+.ff-cover-0 {
+  background: linear-gradient(145deg, #2a1f1a 0%, #c45c4a 55%, #f0a090 100%);
+}
+.lt-cover-1,
+.ff-cover-1 {
+  background: linear-gradient(145deg, #1a2430 0%, #3d7ea6 55%, #8ecae6 100%);
+}
+.lt-cover-2,
+.ff-cover-2 {
+  background: linear-gradient(145deg, #1a2a22 0%, #3d9b6e 55%, #95d5b2 100%);
+}
+.lt-cover-3,
+.ff-cover-3 {
+  background: linear-gradient(145deg, #241a2a 0%, #8b5cf6 45%, #e879f9 100%);
+}
+.lt-cover-4,
+.ff-cover-4 {
+  background: linear-gradient(145deg, #2a2418 0%, #d4a017 50%, #f5e6a3 100%);
+}
+.lt-cover-5,
+.ff-cover-5 {
+  background: linear-gradient(145deg, #1c1c28 0%, #6366f1 50%, #a5b4fc 100%);
+}
