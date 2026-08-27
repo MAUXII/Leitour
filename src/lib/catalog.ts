@@ -406,7 +406,7 @@ function pickSubjects(subjects: string[] | undefined, max = 3): string[] {
     .filter(Boolean)
     .filter((s) => s.length <= 28)
     .filter((s) => !/backstor|property|authors$/i.test(s));
-  const unique = [...new Set(scored.map((s) => s.toLowerCase()))].map(
+  const unique = Array.from(new Set(scored.map((s) => s.toLowerCase()))).map(
     (lower) => scored.find((s) => s.toLowerCase() === lower)!,
   );
   return unique.slice(0, max);
@@ -423,7 +423,7 @@ function coverFromId(coverId: number, size: "M" | "L"): string {
 }
 
 async function fetchAuthorNames(keys: string[]): Promise<string[]> {
-  const unique = [...new Set(keys)].slice(0, 4);
+  const unique = Array.from(new Set(keys)).slice(0, 4);
   const names = await Promise.all(
     unique.map(async (key) => {
       const url = new URL(`https://openlibrary.org${key}.json`);

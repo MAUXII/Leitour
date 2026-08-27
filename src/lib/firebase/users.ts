@@ -127,7 +127,13 @@ export async function updateUserProfile(
   const bio = (input.bio ?? "").trim().slice(0, 280);
   const handle = `@${displayName.toLowerCase().replace(/\s+/g, "").slice(0, 24) || "leitor"}`;
 
-  const payload: Record<string, unknown> = {
+  const payload: {
+    displayName: string;
+    handle: string;
+    bio: string;
+    updatedAt: ReturnType<typeof serverTimestamp>;
+    photoURL?: string | null;
+  } = {
     displayName,
     handle,
     bio,
