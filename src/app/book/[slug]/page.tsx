@@ -13,7 +13,7 @@ export async function generateMetadata({ params }: PageProps) {
   const parsed = parseBookSlug(params.slug);
   if (!parsed) return { title: APP_NAME };
   try {
-    const work = await getCatalogWork(parsed.olId);
+    const work = await getCatalogWork(parsed.id);
     if (!work) return { title: APP_NAME };
     const authors = work.authors.join(", ");
     return {
@@ -31,23 +31,16 @@ export default async function BookPage({ params }: PageProps) {
 
   let work;
   try {
-    work = await getCatalogWork(parsed.olId);
+    work = await getCatalogWork(parsed.id);
   } catch {
     notFound();
   }
   if (!work) notFound();
 
   const canonical = bookSlug(work);
-  if (canonical !== params.slug.toLowerCase()) {
+  if (canonical !== params.slug) {
     permanentRedirect(routes.book(canonical));
   }
 
-  const meta = [
-    work.year,
-    work.authors.length ? work.authors.join(", ") : null,
-  ]
-    .filter(Boolean)
-    .join("  ·  ");
-
-  return <BookStage work={work} meta={meta} />;
+  return <BookStage work={work} />;
 }

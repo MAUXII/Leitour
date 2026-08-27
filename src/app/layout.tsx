@@ -24,6 +24,10 @@ const fraunces = Fraunces({
 export const metadata: Metadata = {
   title: APP_NAME,
   description: APP_TAGLINE,
+  icons: {
+    icon: [{ url: "/brand/leitour.png", type: "image/png" }],
+    apple: [{ url: "/brand/leitour.png", type: "image/png" }],
+  },
 };
 
 export default function RootLayout({

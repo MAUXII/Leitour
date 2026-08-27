@@ -9,7 +9,15 @@ service cloud.firestore {
       allow delete: if false;
 
       match /shelf/{bookId} {
-        allow read, write: if request.auth != null
+        // Leitura: qualquer logado (perfil público / estante alheia)
+        allow read: if request.auth != null;
+        allow write: if request.auth != null
+          && request.auth.uid == userId;
+      }
+
+      match /coverOverrides/{bookId} {
+        allow read: if request.auth != null;
+        allow write: if request.auth != null
           && request.auth.uid == userId;
       }
     }

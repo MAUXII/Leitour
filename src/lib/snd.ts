@@ -73,6 +73,7 @@ const TAP_BY_PATH: Record<string, SndName> = {
   [routes.books]: "tap2",
   [routes.discover]: "tap3",
   [routes.profile]: "tap5",
+  [routes.settings]: "tap4",
   [routes.saved]: "tap5",
   [routes.login]: "tap5",
   [routes.signup]: "tap4",
@@ -110,6 +111,26 @@ const DATA_SND: Record<string, SndName> = {
 const cache = new Map<string, HTMLAudioElement>();
 let lastTypeAt = 0;
 
+const SND_MUTE_KEY = "lt-snd-muted";
+
+export function isSndMuted(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    return window.localStorage.getItem(SND_MUTE_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+export function setSndMuted(muted: boolean) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(SND_MUTE_KEY, muted ? "1" : "0");
+  } catch {
+    /* private mode */
+  }
+}
+
 function pick<T>(list: readonly T[]): T {
   return list[Math.floor(Math.random() * list.length)]!;
 }
@@ -141,6 +162,7 @@ export function preloadSnd() {
 
 export function playSnd(name: SndName) {
   if (typeof window === "undefined") return;
+  if (isSndMuted()) return;
   const src = srcFor(name);
   const node = ensure(src).cloneNode(true) as HTMLAudioElement;
   node.volume = VOLUME;

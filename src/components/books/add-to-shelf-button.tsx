@@ -1,21 +1,24 @@
 "use client";
 
 import { useState } from "react";
-import { BookmarkPlus } from "lucide-react";
+import { BookmarkPlus, Check } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import type { CatalogBook } from "@/lib/catalog";
 import { upsertShelfItem } from "@/lib/firebase/shelf";
 import { playSnd } from "@/lib/snd";
 import { cn } from "@/lib/utils";
+import { Tooltip } from "@/components/ui/tooltip";
 
 export function AddToShelfButton({
   book,
   variant = "icon",
   className,
+  tooltipSide = "left",
 }: {
   book: CatalogBook;
   variant?: "icon" | "label" | "solid";
   className?: string;
+  tooltipSide?: "top" | "bottom" | "left" | "right";
 }) {
   const { user } = useAuth();
   const [busy, setBusy] = useState(false);
@@ -48,6 +51,11 @@ export function AddToShelfButton({
   }
 
   const label = done ? "Na estante" : busy ? "Salvando…" : null;
+  const tip = done
+    ? "Na estante"
+    : user
+      ? "Quero ler"
+      : "Entre para salvar";
 
   if (variant === "solid") {
     return (
@@ -85,17 +93,22 @@ export function AddToShelfButton({
 
   return (
     <div className={cn("relative", className)}>
-      <button
-        type="button"
-        data-snd-ignore
-        onClick={() => void onAdd()}
-        disabled={busy || done}
-        className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/10 text-white/55 transition hover:bg-white/5 hover:text-white disabled:opacity-40"
-        aria-label="Adicionar à estante"
-        title={user ? "Quero ler" : "Entre para salvar"}
-      >
-        <BookmarkPlus className="h-4 w-4" strokeWidth={1.5} />
-      </button>
+      <Tooltip label={tip} side={tooltipSide} className="z-[5]">
+        <button
+          type="button"
+          data-snd-ignore
+          onClick={() => void onAdd()}
+          disabled={busy || done}
+          className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-0 bg-transparent text-white transition hover:text-white disabled:opacity-40"
+          aria-label={tip}
+        >
+          {done ? (
+            <Check className="h-4 w-4" strokeWidth={1.75} />
+          ) : (
+            <BookmarkPlus className="h-4 w-4" strokeWidth={1.5} />
+          )}
+        </button>
+      </Tooltip>
       {toast && (
         <p className="absolute right-0 top-full z-10 mt-1 w-max text-xs text-white/45">
           {toast}

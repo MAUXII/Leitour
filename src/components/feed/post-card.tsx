@@ -88,7 +88,18 @@ export function PostCard({ post }: { post: FeedPost }) {
                 )}
                 {post.bookAuthors.length > 0 ? (
                   <p className="truncate text-xs text-white/35">
-                    {post.bookAuthors.join(", ")}
+                    {post.bookAuthors.map((author, i) => (
+                      <span key={`${author}-${i}`}>
+                        {i > 0 ? ", " : null}
+                        <Link
+                          href={routes.author(author)}
+                          data-snd="select"
+                          className="hover:text-white/55"
+                        >
+                          {author}
+                        </Link>
+                      </span>
+                    ))}
                   </p>
                 ) : null}
                 {post.rating != null ? (

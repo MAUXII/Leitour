@@ -13,6 +13,12 @@ function isAllowedCover(url: URL) {
   // Avatares Google / Cloudinary regionais
   if (url.hostname.endsWith(".googleusercontent.com")) return true;
   if (url.hostname.endsWith(".cloudinary.com")) return true;
+  // Capas Google Books
+  if (url.hostname === "books.google.com") return true;
+  if (url.hostname.endsWith(".google.com")) return true;
+  // Capas Hardcover
+  if (url.hostname === "hardcover.app") return true;
+  if (url.hostname.endsWith(".hardcover.app")) return true;
   return false;
 }
 

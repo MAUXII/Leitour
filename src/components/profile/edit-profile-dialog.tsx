@@ -110,6 +110,7 @@ export function EditProfileDialog({
         <DialogOverlay className="bg-black/40 backdrop-blur-2xl" />
         <DialogPrimitive.Content
           aria-describedby={undefined}
+          data-lt-surface="dark"
           className="fixed inset-0 z-[261] overflow-y-auto border-0 bg-transparent p-0 shadow-none outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0"
           onPointerDown={(event) => {
             if (event.target === event.currentTarget) onOpenChange(false);

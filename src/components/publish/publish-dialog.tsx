@@ -175,6 +175,7 @@ export function PublishDialog({
         <DialogOverlay className="bg-black/40 backdrop-blur-2xl" />
         <DialogPrimitive.Content
           aria-describedby={undefined}
+          data-lt-surface="dark"
           className="fixed inset-0 z-[261] overflow-y-auto border-0 bg-transparent p-0 shadow-none outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0"
           onPointerDown={(event) => {
             if (event.target === event.currentTarget) onOpenChange(false);
@@ -205,8 +206,8 @@ export function PublishDialog({
 
             <div className="grid w-full gap-10 md:grid-cols-[minmax(0,280px)_1fr] md:items-start">
               {/* Capa — coluna esquerda (Presence Track create) */}
-              <aside className="mx-auto w-[min(100%,240px)] md:mx-0 md:w-full">
-                <div className="relative aspect-[2/3] w-full overflow-hidden rounded-[12px] bg-white/[0.06] shadow-[0_28px_56px_-18px_rgba(0,0,0,0.9)]">
+              <aside className="relative mx-auto w-[min(100%,240px)] md:mx-0 md:w-full">
+                <div className="relative z-0 aspect-[2/3] w-full overflow-hidden rounded-[12px] bg-white/[0.06] shadow-[0_28px_56px_-18px_rgba(0,0,0,0.9)]">
                   {selected.cover ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
@@ -228,7 +229,7 @@ export function PublishDialog({
                     type="button"
                     data-snd-ignore
                     onClick={clearBook}
-                    className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-[12px] border border-white/10 py-2.5 text-sm text-white/45 transition hover:bg-white/[0.04] hover:text-white/70"
+                    className="relative z-10 mt-3 flex w-full items-center justify-center gap-1.5 rounded-[12px] border border-white/10 py-2.5 text-sm text-white/45 transition hover:bg-white/[0.04] hover:text-white/70"
                   >
                     <X className="h-3.5 w-3.5" strokeWidth={1.5} />
                     Trocar livro
@@ -288,7 +289,10 @@ export function PublishDialog({
                       </label>
 
                       {menuOpen && (results.length > 0 || searching) ? (
-                        <div className="absolute left-0 right-0 top-full z-30 mt-2 overflow-hidden rounded-xl border border-white/10 bg-black/55 shadow-[0_24px_48px_-16px_rgba(0,0,0,0.85)] backdrop-blur-xl">
+                        <div
+                          data-lt-popover=""
+                          className="absolute left-0 right-0 top-full z-30 mt-2 overflow-hidden rounded-xl border border-white/10 bg-black/55 shadow-[0_24px_48px_-16px_rgba(0,0,0,0.85)] backdrop-blur-xl"
+                        >
                           {searching && results.length === 0 ? (
                             <p className="animate-menu-rise px-3.5 py-3 text-sm text-white/40">
                               Buscando…

@@ -29,9 +29,372 @@
   --lt-content-pad-x: 16px;
   --lt-scroll-thumb: rgba(255, 255, 255, 0.2);
   --lt-scroll-thumb-hover: rgba(255, 255, 255, 0.34);
+  --lt-contrast: #ffffff;
+  --lt-contrast-fg: #0a0a0b;
   --ff-bg: var(--lt-bg);
   --ff-scroll-thumb: var(--lt-scroll-thumb);
   --ff-scroll-thumb-hover: var(--lt-scroll-thumb-hover);
+}
+
+/* Tema claro — next-themes seta class="light" no <html> */
+html.light {
+  color-scheme: light;
+  --lt-bg: #f3f2ee;
+  --lt-surface: #ffffff;
+  --lt-surface-hover: #ebe9e4;
+  --lt-ink: #141416;
+  --lt-muted: #6a6a70;
+  --lt-line: rgba(20, 20, 22, 0.1);
+  --lt-scroll-thumb: rgba(20, 20, 22, 0.22);
+  --lt-scroll-thumb-hover: rgba(20, 20, 22, 0.38);
+  --lt-contrast: #141416;
+  --lt-contrast-fg: #f3f2ee;
+}
+
+/*
+  Book / profile: fundo vem da capa ou da foto.
+  Mantém shell escuro + text-white original (não reverte utilitários).
+*/
+html.light[data-lt-chrome="atmosphere"] {
+  color-scheme: dark;
+  --lt-bg: #151618;
+  --lt-surface: #1e1e20;
+  --lt-surface-hover: #262628;
+  --lt-ink: #ffffff;
+  --lt-muted: #888888;
+  --lt-line: rgba(255, 255, 255, 0.08);
+  --lt-scroll-thumb: rgba(255, 255, 255, 0.2);
+  --lt-scroll-thumb-hover: rgba(255, 255, 255, 0.34);
+  --lt-contrast: #ffffff;
+  --lt-contrast-fg: #0a0a0b;
+}
+
+/*
+  Páginas planas (feed, livros, settings…): text-white / bg-white/*
+  viram tinta escura. Book/profile (atmosphere) ficam de fora.
+*/
+html.light[data-lt-chrome="flat"] .text-white {
+  color: rgb(20 20 22) !important;
+}
+html.light[data-lt-chrome="flat"] .text-white\/20 {
+  color: rgb(20 20 22 / 0.2) !important;
+}
+html.light[data-lt-chrome="flat"] .text-white\/25 {
+  color: rgb(20 20 22 / 0.25) !important;
+}
+html.light[data-lt-chrome="flat"] .text-white\/30 {
+  color: rgb(20 20 22 / 0.3) !important;
+}
+html.light[data-lt-chrome="flat"] .text-white\/35 {
+  color: rgb(20 20 22 / 0.35) !important;
+}
+html.light[data-lt-chrome="flat"] .text-white\/40 {
+  color: rgb(20 20 22 / 0.4) !important;
+}
+html.light[data-lt-chrome="flat"] .text-white\/45 {
+  color: rgb(20 20 22 / 0.45) !important;
+}
+html.light[data-lt-chrome="flat"] .text-white\/50 {
+  color: rgb(20 20 22 / 0.5) !important;
+}
+html.light[data-lt-chrome="flat"] .text-white\/55 {
+  color: rgb(20 20 22 / 0.55) !important;
+}
+html.light[data-lt-chrome="flat"] .text-white\/60 {
+  color: rgb(20 20 22 / 0.6) !important;
+}
+html.light[data-lt-chrome="flat"] .text-white\/70 {
+  color: rgb(20 20 22 / 0.7) !important;
+}
+html.light[data-lt-chrome="flat"] .text-white\/80 {
+  color: rgb(20 20 22 / 0.8) !important;
+}
+html.light[data-lt-chrome="flat"] .text-white\/85 {
+  color: rgb(20 20 22 / 0.85) !important;
+}
+html.light[data-lt-chrome="flat"] .text-white\/90 {
+  color: rgb(20 20 22 / 0.9) !important;
+}
+html.light[data-lt-chrome="flat"] .placeholder\:text-white\/30::placeholder {
+  color: rgb(20 20 22 / 0.4) !important;
+}
+html.light[data-lt-chrome="flat"] .placeholder\:text-white\/35::placeholder {
+  color: rgb(20 20 22 / 0.4) !important;
+}
+html.light[data-lt-chrome="flat"] .placeholder\:text-white\/40::placeholder {
+  color: rgb(20 20 22 / 0.4) !important;
+}
+html.light[data-lt-chrome="flat"] .hover\:text-white:hover {
+  color: rgb(20 20 22) !important;
+}
+html.light[data-lt-chrome="flat"] .hover\:text-white\/50:hover {
+  color: rgb(20 20 22 / 0.5) !important;
+}
+html.light[data-lt-chrome="flat"] .hover\:text-white\/55:hover {
+  color: rgb(20 20 22 / 0.55) !important;
+}
+html.light[data-lt-chrome="flat"] .hover\:text-white\/60:hover {
+  color: rgb(20 20 22 / 0.6) !important;
+}
+html.light[data-lt-chrome="flat"] .hover\:text-white\/70:hover {
+  color: rgb(20 20 22 / 0.7) !important;
+}
+html.light[data-lt-chrome="flat"] .hover\:text-white\/75:hover {
+  color: rgb(20 20 22 / 0.75) !important;
+}
+html.light[data-lt-chrome="flat"] .hover\:text-white\/90:hover {
+  color: rgb(20 20 22 / 0.9) !important;
+}
+
+html.light[data-lt-chrome="flat"] .bg-white {
+  background-color: #141416 !important;
+}
+html.light[data-lt-chrome="flat"] .bg-white\/10 {
+  background-color: rgb(20 20 22 / 0.1) !important;
+}
+html.light[data-lt-chrome="flat"] .bg-white\/15 {
+  background-color: rgb(20 20 22 / 0.15) !important;
+}
+html.light[data-lt-chrome="flat"] .bg-white\/70 {
+  background-color: rgb(20 20 22 / 0.7) !important;
+}
+html.light[data-lt-chrome="flat"] .bg-white\/90 {
+  background-color: rgb(20 20 22 / 0.9) !important;
+}
+html.light[data-lt-chrome="flat"] .bg-white\/\[0\.02\] {
+  background-color: rgb(20 20 22 / 0.02) !important;
+}
+html.light[data-lt-chrome="flat"] .bg-white\/\[0\.03\] {
+  background-color: rgb(20 20 22 / 0.03) !important;
+}
+html.light[data-lt-chrome="flat"] .bg-white\/\[0\.04\] {
+  background-color: rgb(20 20 22 / 0.04) !important;
+}
+html.light[data-lt-chrome="flat"] .bg-white\/\[0\.06\] {
+  background-color: rgb(20 20 22 / 0.06) !important;
+}
+html.light[data-lt-chrome="flat"] .bg-white\/\[0\.07\] {
+  background-color: rgb(20 20 22 / 0.07) !important;
+}
+html.light[data-lt-chrome="flat"] .bg-white\/\[0\.08\] {
+  background-color: rgb(20 20 22 / 0.08) !important;
+}
+html.light[data-lt-chrome="flat"] .hover\:bg-white:hover {
+  background-color: #141416 !important;
+}
+html.light[data-lt-chrome="flat"] .hover\:bg-white\/5:hover {
+  background-color: rgb(20 20 22 / 0.05) !important;
+}
+html.light[data-lt-chrome="flat"] .hover\:bg-white\/90:hover {
+  background-color: rgb(20 20 22 / 0.9) !important;
+}
+html.light[data-lt-chrome="flat"] .hover\:bg-white\/92:hover {
+  background-color: rgb(20 20 22 / 0.92) !important;
+}
+html.light[data-lt-chrome="flat"] .hover\:bg-white\/\[0\.03\]:hover {
+  background-color: rgb(20 20 22 / 0.03) !important;
+}
+html.light[data-lt-chrome="flat"] .hover\:bg-white\/\[0\.04\]:hover {
+  background-color: rgb(20 20 22 / 0.04) !important;
+}
+html.light[data-lt-chrome="flat"] .hover\:bg-white\/\[0\.06\]:hover {
+  background-color: rgb(20 20 22 / 0.06) !important;
+}
+html.light[data-lt-chrome="flat"] .hover\:bg-white\/\[0\.08\]:hover {
+  background-color: rgb(20 20 22 / 0.08) !important;
+}
+html.light[data-lt-chrome="flat"] .hover\:bg-white\/\[0\.09\]:hover {
+  background-color: rgb(20 20 22 / 0.09) !important;
+}
+html.light[data-lt-chrome="flat"] .hover\:bg-white\/\[0\.1\]:hover {
+  background-color: rgb(20 20 22 / 0.1) !important;
+}
+
+html.light[data-lt-chrome="flat"] .border-white\/10 {
+  border-color: rgb(20 20 22 / 0.1) !important;
+}
+html.light[data-lt-chrome="flat"] .border-white\/12 {
+  border-color: rgb(20 20 22 / 0.12) !important;
+}
+html.light[data-lt-chrome="flat"] .border-white\/15 {
+  border-color: rgb(20 20 22 / 0.15) !important;
+}
+html.light[data-lt-chrome="flat"] .border-white\/20 {
+  border-color: rgb(20 20 22 / 0.2) !important;
+}
+html.light[data-lt-chrome="flat"] .border-white\/25 {
+  border-color: rgb(20 20 22 / 0.25) !important;
+}
+html.light[data-lt-chrome="flat"] .border-white\/30 {
+  border-color: rgb(20 20 22 / 0.3) !important;
+}
+html.light[data-lt-chrome="flat"] .border-white\/40 {
+  border-color: rgb(20 20 22 / 0.4) !important;
+}
+html.light[data-lt-chrome="flat"] .border-white\/70 {
+  border-color: rgb(20 20 22 / 0.7) !important;
+}
+html.light[data-lt-chrome="flat"] .border-white\/\[0\.08\] {
+  border-color: rgb(20 20 22 / 0.08) !important;
+}
+html.light[data-lt-chrome="flat"] .hover\:border-white\/25:hover {
+  border-color: rgb(20 20 22 / 0.25) !important;
+}
+html.light[data-lt-chrome="flat"] .hover\:border-white\/40:hover {
+  border-color: rgb(20 20 22 / 0.4) !important;
+}
+
+/* CTA: texto preto em botão branco → texto claro no contraste do light */
+html.light[data-lt-chrome="flat"] .text-black {
+  color: #f3f2ee !important;
+}
+html.light[data-lt-chrome="flat"] .text-black\/45 {
+  color: rgb(243 242 238 / 0.45) !important;
+}
+
+/* Thumb do switch (bg-black sólido) vira claro no light */
+html.light[data-lt-chrome="flat"] .bg-black {
+  background-color: #f3f2ee !important;
+}
+
+html.light[data-lt-chrome="flat"] .lt-nav-link {
+  color: rgba(20, 20, 22, 0.5);
+}
+html.light[data-lt-chrome="flat"] .lt-nav-link:hover {
+  color: rgba(20, 20, 22, 0.85);
+}
+html.light[data-lt-chrome="flat"] .lt-nav-link[data-active="true"] {
+  color: #141416;
+}
+
+html.light[data-lt-chrome="flat"] .lt-glass {
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(20, 20, 22, 0.08);
+  box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.18);
+}
+
+/*
+  Dropdowns seguem o tema — também em /book e /profile (atmosphere),
+  onde o chrome da página continua claro-sobre-capa.
+*/
+html.light [data-lt-popover] {
+  color: #141416 !important;
+  background-color: rgba(255, 255, 255, 0.94) !important;
+  border-color: rgba(20, 20, 22, 0.1) !important;
+  box-shadow:
+    0 0 0 0.5px rgba(20, 20, 22, 0.06),
+    0 12px 40px -12px rgba(15, 23, 42, 0.22) !important;
+  backdrop-filter: blur(18px) saturate(1.4);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
+}
+html.light [data-lt-popover] .text-white {
+  color: #141416 !important;
+}
+html.light [data-lt-popover] .text-white\/20 {
+  color: rgb(20 20 22 / 0.2) !important;
+}
+html.light [data-lt-popover] .text-white\/25 {
+  color: rgb(20 20 22 / 0.25) !important;
+}
+html.light [data-lt-popover] .text-white\/30 {
+  color: rgb(20 20 22 / 0.3) !important;
+}
+html.light [data-lt-popover] .text-white\/35 {
+  color: rgb(20 20 22 / 0.35) !important;
+}
+html.light [data-lt-popover] .text-white\/40 {
+  color: rgb(20 20 22 / 0.4) !important;
+}
+html.light [data-lt-popover] .text-white\/45 {
+  color: rgb(20 20 22 / 0.45) !important;
+}
+html.light [data-lt-popover] .text-white\/50 {
+  color: rgb(20 20 22 / 0.5) !important;
+}
+html.light [data-lt-popover] .text-white\/55 {
+  color: rgb(20 20 22 / 0.55) !important;
+}
+html.light [data-lt-popover] .text-white\/60 {
+  color: rgb(20 20 22 / 0.6) !important;
+}
+html.light [data-lt-popover] .text-white\/70 {
+  color: rgb(20 20 22 / 0.7) !important;
+}
+html.light [data-lt-popover] .text-white\/80 {
+  color: rgb(20 20 22 / 0.8) !important;
+}
+html.light [data-lt-popover] .hover\:bg-white\/5:hover {
+  background-color: rgb(20 20 22 / 0.05) !important;
+}
+html.light [data-lt-popover] .bg-white\/10 {
+  background-color: rgb(20 20 22 / 0.1) !important;
+}
+html.light [data-lt-popover] .hover\:text-red-400:hover {
+  color: rgb(220 38 38) !important;
+}
+
+/* Tooltips seguem o tema (evita preto-no-preto no light) */
+html.light [data-lt-tooltip],
+html.light[data-lt-chrome="flat"] [data-lt-tooltip].text-white {
+  background-color: rgba(255, 255, 255, 0.96) !important;
+  color: #141416 !important;
+  border: 1px solid rgba(20, 20, 22, 0.08);
+  box-shadow:
+    0 0 0 0.5px rgba(20, 20, 22, 0.04),
+    0 8px 24px -8px rgba(15, 23, 42, 0.2) !important;
+}
+
+/* Diálogos fullscreen/modais escuros: mantêm texto claro no light flat */
+html.light[data-lt-chrome="flat"] [data-lt-surface="dark"] {
+  color: #fff;
+}
+html.light[data-lt-chrome="flat"] [data-lt-surface="dark"] .text-white {
+  color: #fff !important;
+}
+html.light[data-lt-chrome="flat"] [data-lt-surface="dark"] .text-white\/20 {
+  color: rgb(255 255 255 / 0.2) !important;
+}
+html.light[data-lt-chrome="flat"] [data-lt-surface="dark"] .text-white\/25 {
+  color: rgb(255 255 255 / 0.25) !important;
+}
+html.light[data-lt-chrome="flat"] [data-lt-surface="dark"] .text-white\/30 {
+  color: rgb(255 255 255 / 0.3) !important;
+}
+html.light[data-lt-chrome="flat"] [data-lt-surface="dark"] .text-white\/35 {
+  color: rgb(255 255 255 / 0.35) !important;
+}
+html.light[data-lt-chrome="flat"] [data-lt-surface="dark"] .text-white\/40 {
+  color: rgb(255 255 255 / 0.4) !important;
+}
+html.light[data-lt-chrome="flat"] [data-lt-surface="dark"] .text-white\/45 {
+  color: rgb(255 255 255 / 0.45) !important;
+}
+html.light[data-lt-chrome="flat"] [data-lt-surface="dark"] .text-white\/50 {
+  color: rgb(255 255 255 / 0.5) !important;
+}
+html.light[data-lt-chrome="flat"] [data-lt-surface="dark"] .text-white\/55 {
+  color: rgb(255 255 255 / 0.55) !important;
+}
+html.light[data-lt-chrome="flat"] [data-lt-surface="dark"] .text-white\/60 {
+  color: rgb(255 255 255 / 0.6) !important;
+}
+html.light[data-lt-chrome="flat"] [data-lt-surface="dark"] .text-white\/70 {
+  color: rgb(255 255 255 / 0.7) !important;
+}
+html.light[data-lt-chrome="flat"] [data-lt-surface="dark"] .text-white\/80 {
+  color: rgb(255 255 255 / 0.8) !important;
+}
+html.light[data-lt-chrome="flat"] [data-lt-surface="dark"] .hover\:bg-white\/5:hover {
+  background-color: rgb(255 255 255 / 0.05) !important;
+}
+html.light[data-lt-chrome="flat"] [data-lt-surface="dark"] .bg-white {
+  background-color: #fff !important;
+}
+html.light[data-lt-chrome="flat"] [data-lt-surface="dark"] .text-black {
+  color: #0a0a0b !important;
+}
+html.light[data-lt-chrome="flat"] [data-lt-surface="dark"] .hover\:bg-white\/90:hover {
+  background-color: rgb(255 255 255 / 0.9) !important;
 }
 
 html {

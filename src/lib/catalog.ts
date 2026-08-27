@@ -1,4 +1,14 @@
 import { olPathFromId } from "@/lib/book-slug";
+import {
+  getGoogleBookVolume,
+  searchGoogleBooks,
+} from "@/lib/catalog-google";
+import {
+  getHardcoverBook,
+  hardcoverConfigured,
+  searchHardcoverBooks,
+  toHardcoverSearchQuery,
+} from "@/lib/catalog-hardcover";
 
 export type CatalogBook = {
   key: string;
@@ -9,10 +19,10 @@ export type CatalogBook = {
   isbn?: string;
 };
 
-/** Open Library recusa `q` com < 3 chars (HTTP 422). */
+/** Mínimo pra busca (Google tolera curto; OL ainda é fallback). */
 export const OL_MIN_QUERY_CHARS = 3;
 
-const OL_BLOCKED_QUERIES = new Set(["the"]);
+const BLOCKED_QUERIES = new Set(["the"]);
 
 export type CatalogQueryPrep =
   | { ok: true; q: string; sort?: "editions" }
@@ -27,31 +37,29 @@ export function prepareCatalogQuery(raw: string): CatalogQueryPrep {
     return { ok: true, q: `isbn:${isbn}` };
   }
 
-  if (OL_BLOCKED_QUERIES.has(q.toLowerCase())) {
+  if (BLOCKED_QUERIES.has(q.toLowerCase())) {
     return { ok: false, reason: "blocked" };
   }
 
   if (q.length < 2) return { ok: false, reason: "short" };
 
-  // 2 letras: prefixo `it*` vira 3 chars e passa na validação da OL.
-  if (q.length < OL_MIN_QUERY_CHARS) {
-    return { ok: true, q: `${q}*`, sort: "editions" };
-  }
-
-  // Subject: ordenar por nº de edições ≈ obras mais conhecidas primeiro.
   if (/^subject:/i.test(q)) {
     return { ok: true, q, sort: "editions" };
+  }
+
+  if (/^(?:author|inauthor|title|intitle|isbn):/i.test(q)) {
+    return { ok: true, q };
   }
 
   return { ok: true, q };
 }
 
-/** Busca por subject na Open Library (`subject:horror` / `subject:"horror fiction"`). */
+/** Busca por subject (`subject:horror` / `subject:"horror fiction"`). */
 export function subjectSearchQuery(subject: string): string {
-  const s = subject.trim().replace(/"/g, "");
-  if (!s) return "";
-  if (/\s/.test(s)) return `subject:"${s}"`;
-  return `subject:${s}`;
+  const primary = subject.trim().split("/")[0]!.trim().replace(/"/g, "");
+  if (!primary) return "";
+  if (/\s/.test(primary)) return `subject:"${primary}"`;
+  return `subject:${primary}`;
 }
 
 export function formatSubjectLabel(subject: string): string {
@@ -61,17 +69,12 @@ export function formatSubjectLabel(subject: string): string {
     .replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-/** Extrai o rótulo de `subject:horror` / `subject:"horror fiction"`. */
 function parseSubjectNeedle(q: string): string | null {
   const m = q.trim().match(/^subject:(?:"([^"]+)"|(.+))$/i);
   const value = (m?.[1] ?? m?.[2])?.trim();
   return value || null;
 }
 
-/**
- * A OL indexa subject de forma frouxa (ex.: "ships" casa "relationships").
- * Exigimos match de palavra/frase real no array de subjects.
- */
 function docHasSubject(
   subjects: string[] | undefined,
   needle: string,
@@ -141,39 +144,39 @@ async function fetchOpenLibrary(
   return res;
 }
 
-export async function searchCatalogBooks(
-  query: string,
-  limit = 20,
+async function searchOpenLibraryBooks(
+  preparedQ: string,
+  sort: "editions" | undefined,
+  limit: number,
+  page = 1,
 ): Promise<CatalogBook[]> {
-  const prepared = prepareCatalogQuery(query);
-  if (!prepared.ok) return [];
-
-  const subjectNeedle = parseSubjectNeedle(prepared.q);
+  const subjectNeedle = parseSubjectNeedle(preparedQ);
   const capped = Math.min(Math.max(limit, 1), 40);
-  // Subject: pedimos mais docs porque filtramos match frouxo da OL depois.
+  const pageSafe = Math.max(1, Math.floor(page));
   const fetchLimit = subjectNeedle
     ? Math.min(Math.max(capped * 3, 40), 80)
     : capped;
 
+  let q = preparedQ;
+  if (!subjectNeedle && !/^isbn:/i.test(q) && q.length < OL_MIN_QUERY_CHARS) {
+    q = `${q}*`;
+  }
+
   const url = new URL("https://openlibrary.org/search.json");
-  url.searchParams.set("q", prepared.q);
+  url.searchParams.set("q", q);
   url.searchParams.set("limit", String(fetchLimit));
+  url.searchParams.set("page", String(pageSafe));
   url.searchParams.set(
     "fields",
     subjectNeedle
       ? "key,title,author_name,first_publish_year,cover_i,isbn,subject"
       : "key,title,author_name,first_publish_year,cover_i,isbn",
   );
-  if (prepared.sort) url.searchParams.set("sort", prepared.sort);
+  if (sort) url.searchParams.set("sort", sort);
 
   const res = await fetchOpenLibrary(url);
-
-  // 422 = query inválida pra OL. Não vira erro vermelho na UI.
   if (res.status === 422) return [];
-
-  if (!res.ok) {
-    throw new Error(`Open Library respondeu ${res.status}`);
-  }
+  if (!res.ok) throw new Error(`Open Library respondeu ${res.status}`);
 
   const data = (await res.json()) as OpenLibrarySearchResponse;
   let docs = data.docs ?? [];
@@ -185,6 +188,170 @@ export async function searchCatalogBooks(
     .slice(0, capped)
     .map(mapOpenLibraryDoc)
     .filter((book): book is CatalogBook => book !== null);
+}
+
+export type CatalogSearchPage = {
+  books: CatalogBook[];
+  hasMore: boolean;
+};
+
+function foldText(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+function normalizeIsbn(isbn?: string): string | null {
+  if (!isbn) return null;
+  const clean = isbn.replace(/[-\s]/g, "").toUpperCase();
+  return clean.length >= 10 ? clean : null;
+}
+
+function bookFingerprint(book: CatalogBook): string {
+  const isbn = normalizeIsbn(book.isbn);
+  if (isbn) return `isbn:${isbn}`;
+  const title = foldText(book.title);
+  const author = foldText(book.authors[0] ?? "");
+  return `ta:${title}|${author}`;
+}
+
+function titleRelevance(title: string, query: string): number {
+  const q = foldText(
+    query.replace(/^(?:intitle|inauthor|subject|isbn|author|title):/i, ""),
+  );
+  if (!q || /^subject\b/i.test(query.trim())) return 0;
+  const t = foldText(title);
+  if (!t) return 0;
+  if (t === q) return 40;
+  if (t.startsWith(q)) return 28;
+  if (t.includes(q)) return 18;
+  const words = q.split(/\s+/).filter((w) => w.length > 2);
+  if (!words.length) return 0;
+  const hit = words.filter((w) => t.includes(w)).length;
+  return Math.round((hit / words.length) * 14);
+}
+
+function mapHardcoverHit(b: {
+  id: number;
+  title: string;
+  authors: string[];
+  year?: number;
+  coverUrl?: string;
+  isbn?: string;
+}): CatalogBook {
+  return {
+    key: `hc:${b.id}`,
+    title: b.title,
+    authors: b.authors,
+    year: b.year,
+    coverUrl: b.coverUrl,
+    isbn: b.isbn,
+  };
+}
+
+function mapGoogleHit(v: {
+  id: string;
+  title: string;
+  authors: string[];
+  year?: number;
+  coverUrl?: string;
+  isbn?: string;
+}): CatalogBook {
+  return {
+    key: `gb:${v.id}`,
+    title: v.title,
+    authors: v.authors,
+    year: v.year,
+    coverUrl: v.coverUrl,
+    isbn: v.isbn,
+  };
+}
+
+/** Une HC + Google, dedupe por ISBN / título+autor, prioriza match de título. */
+function mergeCatalogResults(
+  hardcover: CatalogBook[],
+  google: CatalogBook[],
+  query: string,
+  limit: number,
+): CatalogBook[] {
+  type Tagged = { book: CatalogBook; source: "hc" | "gb" };
+  const tagged: Tagged[] = [
+    ...hardcover.map((book) => ({ book, source: "hc" as const })),
+    ...google.map((book) => ({ book, source: "gb" as const })),
+  ];
+
+  tagged.sort((a, b) => {
+    const score = (item: Tagged) =>
+      titleRelevance(item.book.title, query) +
+      (item.book.coverUrl ? 3 : 0) +
+      (item.source === "hc" ? 1 : 0) +
+      (item.book.isbn ? 1 : 0);
+    return score(b) - score(a);
+  });
+
+  const seen = new Set<string>();
+  const out: CatalogBook[] = [];
+  for (const { book } of tagged) {
+    const fp = bookFingerprint(book);
+    if (seen.has(fp)) continue;
+    seen.add(fp);
+    out.push(book);
+    if (out.length >= limit) break;
+  }
+  return out;
+}
+
+export async function searchCatalogBooks(
+  query: string,
+  limit = 16,
+  page = 1,
+): Promise<CatalogSearchPage> {
+  const prepared = prepareCatalogQuery(query);
+  if (!prepared.ok) return { books: [], hasMore: false };
+
+  const want = Math.min(Math.max(limit, 1), 24);
+  const pageSafe = Math.max(1, Math.floor(page));
+
+  const runHc =
+    hardcoverConfigured() && Boolean(toHardcoverSearchQuery(prepared.q));
+
+  // Hardcover + Google em paralelo — não fica preso se o HC devolver lixo/parcial
+  const [hcSettled, gbSettled] = await Promise.allSettled([
+    runHc
+      ? searchHardcoverBooks(prepared.q, want, pageSafe)
+      : Promise.resolve([] as Awaited<ReturnType<typeof searchHardcoverBooks>>),
+    searchGoogleBooks(prepared.q, want, pageSafe),
+  ]);
+
+  const hcBooks =
+    hcSettled.status === "fulfilled"
+      ? hcSettled.value.map(mapHardcoverHit)
+      : [];
+  const gbBooks =
+    gbSettled.status === "fulfilled"
+      ? gbSettled.value.map(mapGoogleHit)
+      : [];
+
+  if (hcBooks.length > 0 || gbBooks.length > 0) {
+    const books = mergeCatalogResults(hcBooks, gbBooks, prepared.q, want);
+    const hasMore =
+      (hcSettled.status === "fulfilled" &&
+        hcSettled.value.length >= want) ||
+      (gbSettled.status === "fulfilled" && gbSettled.value.length >= want);
+    return { books, hasMore };
+  }
+
+  // Fallback Open Library se ambos falharem / vazios
+  const ol = await searchOpenLibraryBooks(
+    prepared.q,
+    prepared.sort,
+    want,
+    pageSafe,
+  );
+  return { books: ol, hasMore: ol.length >= want };
 }
 
 export type CatalogWork = CatalogBook & {
@@ -222,7 +389,6 @@ function textFromOl(value: OpenLibraryText | undefined): string | undefined {
     .replace(/\[\[([^|\]]+\|)?([^\]]+)\]\]/g, "$2")
     .replace(/<[^>]+>/g, "");
 
-  // Lixo editorial da OL: "Also contained in", listas de omnibus, etc.
   cleaned = cleaned
     .split(/\n-{2,}\n|\nAlso contained in:?\n/i)[0]
     .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
@@ -233,7 +399,6 @@ function textFromOl(value: OpenLibraryText | undefined): string | undefined {
   return cleaned || undefined;
 }
 
-/** Prefer subjects curtos/legíveis; a OL manda dezenas de tags ruidosas. */
 function pickSubjects(subjects: string[] | undefined, max = 3): string[] {
   if (!subjects?.length) return [];
   const scored = subjects
@@ -320,9 +485,7 @@ function clipDescription(text: string, max = 1800): string {
   return `${cut.slice(0, at > 400 ? at : max).trim()}…`;
 }
 
-export async function getCatalogWork(
-  olId: string,
-): Promise<CatalogWork | null> {
+async function getOpenLibraryWork(olId: string): Promise<CatalogWork | null> {
   const workPath = await resolveWorkPath(olId);
   if (!workPath) return null;
 
@@ -363,4 +526,44 @@ export async function getCatalogWork(
     description: description ? clipDescription(description, 1200) : undefined,
     subjects: pickSubjects(work.subjects, 3),
   };
+}
+
+/** Aceita `hc:id`, `gb:volumeId` ou id Open Library (`ol123w` / path). */
+export async function getCatalogWork(
+  catalogId: string,
+): Promise<CatalogWork | null> {
+  if (/^hc:/i.test(catalogId)) {
+    const book = await getHardcoverBook(catalogId);
+    if (!book) return null;
+    return {
+      key: `hc:${book.id}`,
+      title: book.title,
+      authors: book.authors,
+      year: book.year,
+      coverUrl: book.coverUrl,
+      isbn: book.isbn,
+      description: book.description
+        ? clipDescription(book.description, 1200)
+        : undefined,
+      subjects: pickSubjects(book.subjects, 3),
+    };
+  }
+
+  if (/^gb:/i.test(catalogId)) {
+    const vol = await getGoogleBookVolume(catalogId);
+    if (!vol) return null;
+    return {
+      key: `gb:${vol.id}`,
+      title: vol.title,
+      authors: vol.authors,
+      year: vol.year,
+      coverUrl: vol.coverUrl,
+      isbn: vol.isbn,
+      description: vol.description
+        ? clipDescription(vol.description, 1200)
+        : undefined,
+      subjects: pickSubjects(vol.subjects, 3),
+    };
+  }
+  return getOpenLibraryWork(catalogId);
 }

@@ -1,27 +1,39 @@
 import Link from "next/link";
-import { APP_MARK, APP_NAME } from "@/lib/brand";
+import { APP_LOGO_SRC, APP_NAME } from "@/lib/brand";
 import { routes } from "@/lib/routes";
 import { cn } from "@/lib/utils";
 
 type AppMarkProps = {
   href?: string;
   className?: string;
+  /** Tamanho do ícone em px (default 24). */
+  size?: number;
 };
 
 export function AppMarkLink({
-  href = routes.discover,
+  href = routes.feed,
   className,
+  size = 24,
 }: AppMarkProps) {
   return (
     <Link
       href={href}
       aria-label={`${APP_NAME} home`}
       className={cn(
-        "text-sm font-medium lowercase tracking-tight text-white/70 transition hover:text-white",
+        "inline-flex shrink-0 items-center justify-center transition hover:opacity-90",
         className,
       )}
     >
-      {APP_MARK}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={APP_LOGO_SRC}
+        alt={APP_NAME}
+        width={size}
+        height={size}
+        className="block rounded-[8px] object-cover"
+        style={{ width: size, height: size }}
+        decoding="async"
+      />
     </Link>
   );
 }

@@ -13,13 +13,14 @@ import {
   User,
   Bookmark,
   LogOut,
+  Settings,
 } from "lucide-react";
-import { APP_MARK, APP_NAME } from "@/lib/brand";
-import { isBookPath, routes } from "@/lib/routes";
+import { isAtmospherePath, isBookPath, routes } from "@/lib/routes";
 import { cn } from "@/lib/utils";
 import { playSnd } from "@/lib/snd";
 import { useAuth } from "@/hooks/useAuth";
 import { signOutUser } from "@/lib/firebase/auth";
+import { AppMarkLink } from "@/components/brand/app-logo";
 import {
   Popover,
   PopoverContent,
@@ -48,6 +49,17 @@ function AccountMenu({
       >
         <User className="h-4 w-4 shrink-0 text-white/55" strokeWidth={1.5} />
         Ver perfil
+      </Link>
+      <Link
+        href={routes.settings}
+        onClick={onClose}
+        className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm text-white transition hover:bg-white/5"
+      >
+        <Settings
+          className="h-4 w-4 shrink-0 text-white/55"
+          strokeWidth={1.5}
+        />
+        Configurações
       </Link>
       <Link
         href={routes.saved}
@@ -94,6 +106,7 @@ export function TopNav() {
   ] as const;
 
   const wideNav = isBookPath(pathname);
+  const atmosphere = isAtmospherePath(pathname);
 
   useEffect(() => {
     const update = () => {
@@ -110,6 +123,14 @@ export function TopNav() {
     const id = setInterval(update, 30_000);
     return () => clearInterval(id);
   }, []);
+
+  useEffect(() => {
+    const root = document.documentElement;
+    root.dataset.ltChrome = atmosphere ? "atmosphere" : "flat";
+    return () => {
+      delete root.dataset.ltChrome;
+    };
+  }, [atmosphere]);
 
   useEffect(() => {
     setMobileOpen(false);
@@ -168,13 +189,7 @@ export function TopNav() {
           className="pointer-events-none absolute inset-x-0 top-0 h-20 bg-[radial-gradient(ellipse_80%_120%_at_12%_0%,rgba(19,88,227,0.16),transparent_55%)] transition-opacity duration-300 [[data-lt-atmosphere=tint]_&]:opacity-0 [[data-ff-atmosphere=tint]_&]:opacity-0"
         />
         <nav className="relative lt-nav">
-          <Link
-            href={routes.feed}
-            aria-label={`${APP_NAME} Home`}
-            className="flex shrink-0 items-center text-[15px] font-medium lowercase tracking-tight text-white"
-          >
-            {APP_MARK}
-          </Link>
+          <AppMarkLink href={routes.feed} size={24} />
           <div className="lt-center-and-right">
             <div className="lt-nav-links">
               {navLinks.map(({ href, label, icon: Icon }) => {

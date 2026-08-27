@@ -107,7 +107,10 @@ export default function OnboardingPage() {
     <main className="relative min-h-screen overflow-hidden bg-[var(--lt-bg)] text-white">
       <div aria-hidden className={AUTH_ATMOSPHERE_CLASS} />
 
-      <AppMarkLink className="absolute left-5 top-5 z-10 md:left-8 md:top-8" />
+      <AppMarkLink
+        className="absolute left-5 top-5 z-10 md:left-8 md:top-8"
+        size={32}
+      />
 
       <div className="relative mx-auto flex min-h-screen w-full max-w-md flex-col px-6 pb-10 pt-20 md:pt-24">
         <h1 className="text-4xl font-semibold tracking-tight md:text-5xl">

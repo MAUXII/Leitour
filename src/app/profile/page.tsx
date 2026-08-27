@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { BookOpen } from "lucide-react";
+import { BookOpen, Pencil } from "lucide-react";
 import Link from "next/link";
 import { AppShell } from "@/components/app-shell/app-shell";
 import { HubAtmosphere } from "@/components/community-hub/hub-atmosphere";
+import { EditFavoritesDialog } from "@/components/profile/edit-favorites-dialog";
 import { EditProfileDialog } from "@/components/profile/edit-profile-dialog";
 import { LiquidGlass } from "@/components/ui/glasscn/liquid-glass";
 import { Tooltip } from "@/components/ui/tooltip";
@@ -17,6 +18,10 @@ import {
   type ShelfItem,
   type ShelfStatus,
 } from "@/lib/firebase/shelf";
+import {
+  normalizeFavorites,
+  type FavoriteBook,
+} from "@/lib/firebase/users";
 import { routes } from "@/lib/routes";
 import { coverIndex } from "@/lib/cover-tint";
 import { cn } from "@/lib/utils";
@@ -48,20 +53,20 @@ function ShelfGrid({ items }: { items: ShelfItem[] }) {
               <Link
                 href={routes.book(slug)}
                 data-snd="select"
-                className="group block"
+                className="group block overflow-hidden rounded-[10px]"
               >
                 {item.coverUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={item.coverUrl}
                     alt={item.title}
-                    className="aspect-[2/3] w-full rounded-[10px] object-cover shadow-[0_14px_32px_-14px_rgba(0,0,0,0.9)] transition duration-300 group-hover:brightness-110 group-hover:scale-[1.02]"
+                    className="aspect-[2/3] w-full rounded-[10px] object-cover shadow-[0_14px_32px_-14px_rgba(0,0,0,0.9)] transition-[transform,filter] duration-500 ease-out will-change-transform group-hover:scale-[1.03] group-hover:brightness-[1.04]"
                   />
                 ) : (
                   <div
                     className={cn(
                       `ff-cover-${coverIndex(item.bookKey)}`,
-                      "flex aspect-[2/3] w-full items-center justify-center rounded-[10px]",
+                      "flex aspect-[2/3] w-full items-center justify-center rounded-[10px] transition-[filter] duration-500 ease-out group-hover:brightness-[1.04]",
                     )}
                   >
                     <BookOpen
@@ -84,10 +89,104 @@ function filterShelf(items: ShelfItem[], status?: ShelfStatus) {
   return items.filter((i) => i.status === status);
 }
 
+/** Só conteúdo da aba Perfil — não mexe no header. */
+function ProfileTab({
+  favorites,
+  recent,
+  onEditFavorites,
+}: {
+  favorites: FavoriteBook[];
+  recent: ShelfItem[];
+  onEditFavorites: () => void;
+}) {
+  const slots: (FavoriteBook | null)[] = [...favorites];
+  while (slots.length < 4) slots.push(null);
+
+  return (
+    <div className="flex flex-col gap-10">
+      <section>
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <h2 className="text-sm font-medium text-white/70">Favoritos</h2>
+          <button
+            type="button"
+            data-snd="select"
+            onClick={onEditFavorites}
+            className="inline-flex items-center gap-1.5 text-xs text-white/40 transition hover:text-white/70"
+          >
+            <Pencil className="h-3 w-3" strokeWidth={1.75} />
+            Editar
+          </button>
+        </div>
+        <ul className="grid grid-cols-4 gap-2.5 sm:gap-4">
+          {slots.map((book, i) => (
+            <li key={book?.bookKey ?? `empty-${i}`}>
+              {book ? (
+                <Tooltip label={book.title}>
+                  <Link
+                    href={routes.book(
+                      bookSlug({ key: book.bookKey, title: book.title }),
+                    )}
+                    data-snd="select"
+                    className="group block overflow-hidden rounded-[10px]"
+                  >
+                    {book.coverUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={book.coverUrl}
+                        alt={book.title}
+                        className="aspect-[2/3] w-full rounded-[10px] object-cover shadow-[0_14px_32px_-14px_rgba(0,0,0,0.9)] transition-[transform,filter] duration-500 ease-out will-change-transform group-hover:scale-[1.03] group-hover:brightness-[1.04]"
+                      />
+                    ) : (
+                      <div
+                        className={cn(
+                          `ff-cover-${coverIndex(book.bookKey)}`,
+                          "flex aspect-[2/3] w-full items-center justify-center rounded-[10px] transition-[filter] duration-500 ease-out group-hover:brightness-[1.04]",
+                        )}
+                      >
+                        <BookOpen
+                          className="h-6 w-6 text-white/25"
+                          strokeWidth={1.25}
+                        />
+                      </div>
+                    )}
+                  </Link>
+                </Tooltip>
+              ) : (
+                <button
+                  type="button"
+                  data-snd="select"
+                  onClick={onEditFavorites}
+                  className="flex aspect-[2/3] w-full items-center justify-center rounded-[10px] border border-dashed border-white/12 bg-white/[0.02] text-white/30 transition hover:border-white/25 hover:text-white/50"
+                  aria-label="Adicionar favorito"
+                >
+                  +
+                </button>
+              )}
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section>
+        <h2 className="mb-4 text-sm font-medium text-white/70">
+          Atividade recente
+        </h2>
+        {recent.length === 0 ? (
+          <p className="py-6 text-sm text-white/40">Nada por aqui ainda.</p>
+        ) : (
+          <ShelfGrid items={recent} />
+        )}
+      </section>
+    </div>
+  );
+}
+
 export default function ProfilePage() {
   const { user, profile, loading, configured, refreshProfile } = useAuth();
   const [shelf, setShelf] = useState<ShelfItem[]>([]);
   const [editOpen, setEditOpen] = useState(false);
+  const [favOpen, setFavOpen] = useState(false);
+  const [favorites, setFavorites] = useState<FavoriteBook[]>([]);
 
   useEffect(() => {
     if (!user) {
@@ -98,6 +197,10 @@ export default function ProfilePage() {
       .then(setShelf)
       .catch(() => setShelf([]));
   }, [user]);
+
+  useEffect(() => {
+    setFavorites(normalizeFavorites(profile?.favorites));
+  }, [profile?.favorites]);
 
   const counts = useMemo(() => {
     const want = shelf.filter((i) => i.status === "quero_ler").length;
@@ -111,6 +214,11 @@ export default function ProfilePage() {
     };
   }, [shelf]);
 
+  const recentReads = useMemo(
+    () => filterShelf(shelf, "lido").slice(0, 12),
+    [shelf],
+  );
+
   if (loading) {
     return <PageLoader />;
   }
@@ -118,9 +226,8 @@ export default function ProfilePage() {
   if (!configured) {
     return (
       <AppShell>
-        <p className="text-sm text-amber-200/90">
-          Configure o Firebase com{" "}
-          <code className="text-white/80">bash scripts/setup-firebase.sh</code>.
+        <p className="py-10 text-center text-sm text-white/50">
+          Firebase não configurado.
         </p>
       </AppShell>
     );
@@ -129,13 +236,12 @@ export default function ProfilePage() {
   if (!user || !profile) {
     return (
       <AppShell>
-        <div className="flex flex-col gap-4 py-16 text-center">
-          <h1 className="text-xl font-semibold text-white">
-            Entre para ver o perfil
-          </h1>
+        <div className="flex flex-col items-center gap-4 py-16 text-center">
+          <p className="text-sm text-white/50">Entre para ver seu perfil.</p>
           <Link
             href={routes.login}
-            className="mx-auto rounded-[12px] bg-white px-5 py-2.5 text-sm font-medium text-black transition hover:bg-white/92"
+            data-snd="select"
+            className="rounded-[12px] bg-white px-5 py-2.5 text-sm font-medium text-black"
           >
             Entrar
           </Link>
@@ -200,11 +306,22 @@ export default function ProfilePage() {
           </header>
 
           <MagneticTabs
-            defaultValue="shelf"
+            defaultValue="profile"
             size="lg"
             glass
             contentBoxed={false}
             items={[
+              {
+                value: "profile",
+                label: "Perfil",
+                content: (
+                  <ProfileTab
+                    favorites={favorites}
+                    recent={recentReads}
+                    onEditFavorites={() => setFavOpen(true)}
+                  />
+                ),
+              },
               {
                 value: "shelf",
                 label: "Estante",
@@ -251,6 +368,18 @@ export default function ProfilePage() {
         user={user}
         profile={profile}
         onSaved={refreshProfile}
+      />
+
+      <EditFavoritesDialog
+        open={favOpen}
+        onOpenChange={setFavOpen}
+        uid={user.uid}
+        initial={favorites}
+        shelf={shelf}
+        onSaved={(next) => {
+          setFavorites(next);
+          void refreshProfile();
+        }}
       />
     </>
   );

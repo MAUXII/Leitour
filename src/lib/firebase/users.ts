@@ -9,6 +9,14 @@ import {
 import type { User } from "firebase/auth";
 import { getDb } from "@/lib/firebase/client";
 
+export type FavoriteBook = {
+  bookKey: string;
+  title: string;
+  authors: string[];
+  coverUrl?: string;
+  year?: number;
+};
+
 export type UserProfile = {
   uid: string;
   email: string | null;
@@ -17,6 +25,8 @@ export type UserProfile = {
   bio: string;
   photoURL: string | null;
   onboardingComplete: boolean;
+  /** Até 4 favoritos (estilo Letterboxd). */
+  favorites?: FavoriteBook[];
   createdAt?: Timestamp;
   updatedAt?: Timestamp;
 };
@@ -43,6 +53,7 @@ export async function ensureUserProfile(user: User): Promise<UserProfile> {
     return {
       ...data,
       onboardingComplete: Boolean(data.onboardingComplete),
+      favorites: normalizeFavorites(data.favorites),
     };
   }
 
@@ -74,6 +85,7 @@ export async function getUserProfile(
   return {
     ...data,
     onboardingComplete: Boolean(data.onboardingComplete),
+    favorites: normalizeFavorites(data.favorites),
   };
 }
 
@@ -130,4 +142,48 @@ export async function updateUserProfile(
   const next = await getUserProfile(uid);
   if (!next) throw new Error("Perfil não encontrado após salvar");
   return next;
+}
+
+const FAVORITES_MAX = 4;
+
+export function normalizeFavorites(
+  list: FavoriteBook[] | undefined | null,
+): FavoriteBook[] {
+  if (!Array.isArray(list)) return [];
+  const out: FavoriteBook[] = [];
+  const seen = new Set<string>();
+  for (const raw of list) {
+    if (!raw || typeof raw !== "object") continue;
+    const bookKey = String(raw.bookKey || "").trim();
+    const title = String(raw.title || "").trim();
+    if (!bookKey || !title || seen.has(bookKey)) continue;
+    seen.add(bookKey);
+    out.push({
+      bookKey,
+      title,
+      authors: Array.isArray(raw.authors)
+        ? raw.authors.map(String).filter(Boolean)
+        : [],
+      coverUrl: raw.coverUrl || undefined,
+      year: typeof raw.year === "number" ? raw.year : undefined,
+    });
+    if (out.length >= FAVORITES_MAX) break;
+  }
+  return out;
+}
+
+/** Substitui a lista de favoritos (0–4). */
+export async function updateUserFavorites(
+  uid: string,
+  favorites: FavoriteBook[],
+): Promise<UserProfile> {
+  const ref = doc(getDb(), "users", uid);
+  const cleaned = normalizeFavorites(favorites);
+  await updateDoc(ref, {
+    favorites: cleaned,
+    updatedAt: serverTimestamp(),
+  });
+  const next = await getUserProfile(uid);
+  if (!next) throw new Error("Perfil não encontrado após favoritos");
+  return { ...next, favorites: cleaned };
 }
